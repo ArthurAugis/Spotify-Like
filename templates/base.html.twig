@@ -150,28 +150,18 @@
                 </button>
                 
                 <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ path('app_home') }}">Home</a>
-                        </li>
-                        {% if app.user %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ path('app_upload_track') }}">
-                                <i class="fas fa-cloud-upload-alt"></i> Upload
-                            </a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                    
-                    <ul class="navbar-nav">
+                    <ul class="navbar-nav ms-auto">
                         {% if app.user %}
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="fas fa-user"></i> {{ app.user.firstName }}
                                 </a>
-                                <ul class="dropdown-menu">
+                                <ul class="dropdown-menu" style="z-index:10000;">
                                     <li><a class="dropdown-item" href="{{ path('app_profile') }}">
                                         <i class="fas fa-user"></i> My Profile
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_library') }}">
+                                        <i class="fas fa-music"></i> My Library
                                     </a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="{{ path('app_logout') }}">

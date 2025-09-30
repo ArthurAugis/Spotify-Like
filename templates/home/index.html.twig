@@ -1,5 +1,22 @@
 {% extends 'base.html.twig' %}
 
+{#
+    Home Page Template - Onzeer Music Streaming Platform
+    
+    This template displays the main dashboard with:
+    - Personalized greeting and search functionality
+    - Recently played playlists with management options
+    - Top trending tracks with playlist management
+    - New releases showcase
+    - Interactive modals for playlist management
+    
+    Features:
+    - Responsive design with Bootstrap 5
+    - Dynamic content based on user authentication
+    - AJAX-powered playlist management
+    - Real-time search functionality
+#}
+
 {% block title %}Home - Onzeer{% endblock %}
 
 {% block body %}
@@ -25,28 +42,45 @@
         </div>
     </div>
 
-    <!-- Recent Playlists Section -->
+    <!-- Recently Played Playlists: Display user's recent playlists with management options -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h2 class="h5 mb-0">Recently Played</h2>
-                <a href="#" class="text-decoration-none text-primary">View All</a>
+                {# Navigation links based on authentication status #}
+                {% if app.user %}
+                <a href="{{ path('app_library') }}" class="text-decoration-none text-primary">
+                </a>
+                {% else %}
+                <a href="{{ path('app_register') }}" class="text-decoration-none text-primary">Join Now</a>
+                {% endif %}
             </div>
             <div class="row g-3">
+                {# Loop through recent playlists #}
                 {% for playlist in recentPlaylists %}
                 <div class="col-lg-3 col-md-4 col-sm-6">
                     <div class="card bg-secondary border-0 playlist-card">
                         <div class="card-body p-3">
                             <div class="d-flex align-items-center">
-                                <img src="{{ playlist.coverImage ? '/uploads/covers/' ~ playlist.coverImage : 'https://via.placeholder.com/60x60/667eea/fff?text=' ~ playlist.name|slice(0,1) }}" 
-                                     alt="{{ playlist.name }}" class="rounded me-3" width="60" height="60">
-                                <div>
+                                {# Display playlist cover or default placeholder #}
+                                {{ playlist.getCoverHtml(60)|raw }}
+                                <div class="ms-3 flex-grow-1">
                                     <h6 class="card-title text-white mb-1">{{ playlist.name }}</h6>
                                     <p class="card-text text-muted small mb-0">{{ playlist.tracks|length }} tracks • {{ playlist.getFormattedTotalDuration() }}</p>
                                 </div>
-                                <button class="btn btn-success btn-sm ms-auto play-btn">
-                                    <i class="fas fa-play"></i>
-                                </button>
+                                <div class="d-flex gap-1">
+                                    {# Show "Add Tracks" button only for playlist owners #}
+                                    {% if app.user and playlist.owner == app.user %}
+                                        <button class="btn btn-success btn-sm" 
+                                                onclick="showAddTracksToPlaylistModal({{ playlist.id }}, '{{ playlist.name|escape('js') }}')"
+                                                title="Add Tracks">
+                                            <i class="fas fa-music"></i>
+                                        </button>
+                                    {% endif %}
+                                    <button class="btn btn-success btn-sm play-btn">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -64,7 +98,7 @@
         </div>
     </div>
 
-    <!-- Section Top Tracks -->
+    <!-- Trending Tracks: Display most popular tracks with interactive features -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -72,14 +106,16 @@
                 <a href="#" class="text-decoration-none text-primary">View All</a>
             </div>
             <div class="bg-secondary rounded p-3">
+                {# Display top tracks in ranked list format #}
                 {% for track in topTracks %}
                 <div class="d-flex align-items-center py-2 track-item">
+                    {# Track ranking number #}
                     <div class="me-3 text-center" style="width: 30px;">
                         <span class="text-muted">{{ loop.index }}</span>
                     </div>
-                    <img src="{{ track.coverImage ? '/uploads/covers/' ~ track.coverImage : 'https://via.placeholder.com/40x40/ff6b6b/fff?text=' ~ track.title|slice(0,1) }}" 
-                         alt="{{ track.title }}" class="rounded me-3" width="40" height="40">
-                    <div class="flex-grow-1">
+                    {# Track cover image or placeholder #}
+                    {{ track.getCoverHtml(40)|raw }}
+                    <div class="flex-grow-1 ms-3">
                         <h6 class="mb-0 text-white">{{ track.title }}</h6>
                         <small class="text-muted">{{ track.artist }}</small>
                     </div>
@@ -87,6 +123,7 @@
                         <small class="text-muted">{{ track.album ?: 'Single' }}</small>
                     </div>
                     <div class="me-3">
+                        {# Like/favorite button #}
                         <button class="btn btn-link text-muted btn-sm">
                             <i class="fas fa-heart"></i>
                         </button>
@@ -97,6 +134,14 @@
                     <div class="me-2">
                         <small class="text-muted">{{ track.playCount }} plays</small>
                     </div>
+                    {# Add to playlist button (authenticated users only) #}
+                    {% if app.user %}
+                        <button class="btn btn-success btn-sm me-2" 
+                                onclick="showAddToPlaylistModal({{ track.id }}, '{{ track.title|escape('js') }}', '{{ track.artist|escape('js') }}')"
+                                title="Add to Playlist">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    {% endif %}
                     <button class="btn btn-success btn-sm play-btn">
                         <i class="fas fa-play"></i>
                     </button>
@@ -115,7 +160,7 @@
         </div>
     </div>
 
-    <!-- New Releases Section -->
+    <!-- New Releases: Latest uploaded tracks in grid layout -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -123,15 +168,35 @@
                 <a href="#" class="text-decoration-none text-primary">View All</a>
             </div>
             <div class="row g-4">
+                {# Display latest tracks in card format with hover effects #}
                 {% for track in newReleases %}
                 <div class="col-lg-2 col-md-3 col-sm-4 col-6">
                     <div class="album-card">
                         <div class="position-relative">
-                            <img src="{{ track.coverImage ? '/uploads/covers/' ~ track.coverImage : 'https://via.placeholder.com/200x200/feca57/fff?text=' ~ track.title|slice(0,2) }}" 
-                                 alt="{{ track.title }}" class="w-100 rounded shadow">
-                            <button class="btn btn-success position-absolute bottom-0 end-0 m-2 play-btn-hover">
-                                <i class="fas fa-play"></i>
-                            </button>
+                            {# Track cover image with fallback gradient placeholder #}
+                            {% if track.coverImage %}
+                                <img src="/uploads/covers/{{ track.coverImage }}" alt="{{ track.title }}" class="w-100 rounded shadow">
+                            {% else %}
+                                <div class="w-100 rounded shadow d-flex align-items-center justify-content-center" style="height: 200px; background: linear-gradient(45deg, #667eea, #764ba2);">
+                                    <i class="fas fa-music fa-3x text-white"></i>
+                                </div>
+                            {% endif %}
+                            {# Overlay action buttons (appear on hover) #}
+                            <div class="position-absolute bottom-0 end-0 m-2 d-flex gap-1">
+                                {# Add to playlist button for authenticated users #}
+                                {% if app.user %}
+                                    <button class="btn btn-success btn-sm play-btn-hover" 
+                                            onclick="showAddToPlaylistModal({{ track.id }}, '{{ track.title|escape('js') }}', '{{ track.artist|escape('js') }}')"
+                                            title="Add to Playlist"
+                                            style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                {% endif %}
+                                <button class="btn btn-success btn-sm play-btn-hover" 
+                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="mt-2">
                             <h6 class="text-white mb-1 text-truncate">{{ track.title }}</h6>
@@ -152,59 +217,33 @@
             </div>
         </div>
     </div>
-
-    <!-- Section Genres -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h2 class="h5 mb-3">Browse by Genre</h2>
-            <div class="row g-3">
-                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
-                    <div class="genre-card bg-gradient-pop rounded p-3 text-center">
-                        <h6 class="text-white mb-0">Pop</h6>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
-                    <div class="genre-card bg-gradient-rock rounded p-3 text-center">
-                        <h6 class="text-white mb-0">Rock</h6>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
-                    <div class="genre-card bg-gradient-rap rounded p-3 text-center">
-                        <h6 class="text-white mb-0">Hip-Hop</h6>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
-                    <div class="genre-card bg-gradient-electronic rounded p-3 text-center">
-                        <h6 class="text-white mb-0">Electronic</h6>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
-                    <div class="genre-card bg-gradient-jazz rounded p-3 text-center">
-                        <h6 class="text-white mb-0">Jazz</h6>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
-                    <div class="genre-card bg-gradient-classical rounded p-3 text-center">
-                        <h6 class="text-white mb-0">Classique</h6>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
+{#
+    Custom CSS Styles for Home Page Components
+    
+    Includes:
+    - Interactive hover effects for playlist cards
+    - Track item highlighting
+    - Album card animations with scaling
+    - Button visibility controls with smooth transitions
+    - Responsive design elements
+#}
 <style>
+/* Playlist card hover effects */
 .playlist-card:hover {
     background-color: #495057 !important;
     cursor: pointer;
 }
 
+/* Track list item hover highlighting */
 .track-item:hover {
     background-color: rgba(255,255,255,0.1);
     border-radius: 5px;
     cursor: pointer;
 }
 
+/* Album card base styling and smooth transitions */
 .album-card {
     transition: transform 0.3s ease;
 }
@@ -214,13 +253,26 @@
     cursor: pointer;
 }
 
+/* Action buttons with fade-in effect on hover */
 .play-btn-hover {
     opacity: 0;
     transition: opacity 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    border-radius: 6px !important;
 }
 
 .album-card:hover .play-btn-hover {
     opacity: 1;
+}
+
+/* Button sizing and positioning controls */
+.play-btn-hover {
+    min-width: 32px !important;
+    min-height: 32px !important;
+}
+
+.play-btn-hover:hover {
+    transform: scale(1.05);
 }
 
 .genre-card {
@@ -243,4 +295,407 @@
 .bg-gradient-jazz { background: linear-gradient(45deg, #fa709a, #fee140); }
 .bg-gradient-classical { background: linear-gradient(45deg, #a8edea, #fed6e3); }
 </style>
+
+<!-- 
+    INTERACTIVE MODALS SECTION
+    
+    These modals provide playlist management functionality:
+    1. Add Track to Playlist: Select existing playlists to add a track
+    2. Add Tracks to Playlist: Search and add multiple tracks to a playlist
+    
+    Features:
+    - AJAX-powered content loading
+    - Real-time search functionality
+    - Dynamic button states (Add/Remove)
+    - Toast notifications for user feedback
+-->
+
+<!-- Modal: Add Track to Existing Playlist -->
+<div class="modal fade" id="addToPlaylistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Add to Playlist
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {# Track information display area #}
+                <div id="addToPlaylistTrackInfo" class="mb-3 p-3 bg-secondary rounded">
+                </div>
+                {# Playlist selection list (populated via AJAX) #}
+                <div id="addToPlaylistList">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Search and Add Tracks to Playlist -->
+<div class="modal fade" id="addTracksToPlaylistModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-music me-2"></i>Add Tracks to <span id="targetPlaylistName"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {# Search input with real-time functionality #}
+                <div class="mb-3">
+                    <div class="input-group">
+                        <input type="text" id="trackSearchInput" class="form-control bg-secondary border-secondary text-white" 
+                               placeholder="Search tracks by title, artist, or album...">
+                        <button class="btn btn-primary" onclick="searchTracksForPlaylist()">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                {# Search results container (populated dynamically) #}
+                <div id="trackSearchResults">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-search fa-3x mb-3"></i>
+                        <p>Search for tracks to add to this playlist</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+/*
+    JAVASCRIPT FUNCTIONALITY FOR PLAYLIST MANAGEMENT
+    
+    This script provides:
+    - Modal management for playlist operations
+    - AJAX communication with backend API
+    - Dynamic content loading and updates
+    - User feedback via toast notifications
+    - Search functionality with real-time results
+    
+    Dependencies:
+    - Bootstrap 5 (for modals and components)
+    - Font Awesome (for icons)
+    - Symfony routing system (for API endpoints)
+*/
+
+/**
+ * Display modal for adding a track to existing playlists
+ * @param {number} trackId - Unique identifier for the track
+ * @param {string} trackTitle - Track title for display
+ * @param {string} trackArtist - Artist name for display
+ */
+function showAddToPlaylistModal(trackId, trackTitle, trackArtist) {
+    // Display track information in modal header
+    document.getElementById('addToPlaylistTrackInfo').innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-music fa-2x text-primary me-3"></i>
+            <div>
+                <h6 class="mb-0">${trackTitle}</h6>
+                <small class="text-muted">${trackArtist}</small>
+            </div>
+        </div>
+    `;
+
+    // Load user's playlists
+    fetch(`{{ path('app_library_playlists_for_track', {'trackId': '__TRACK_ID__'}) }}`.replace('__TRACK_ID__', trackId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let playlistsHtml = '';
+            
+            if (data.playlists.length === 0) {
+                playlistsHtml = `
+                    <div class="text-center text-muted">
+                        <i class="fas fa-list fa-3x mb-3"></i>
+                        <p>No playlists found. <a href="{{ path('app_library') }}" class="text-primary">Create a playlist first!</a></p>
+                    </div>
+                `;
+            } else {
+                playlistsHtml = '<div class="list-group list-group-flush">';
+                data.playlists.forEach(playlist => {
+                    const buttonClass = playlist.hasTrack ? 'btn-danger' : 'btn-success';
+                    const buttonIcon = playlist.hasTrack ? 'minus' : 'plus';
+                    const buttonText = playlist.hasTrack ? 'Remove' : 'Add';
+                    const buttonAction = playlist.hasTrack ? 
+                        `removeTrackFromPlaylist(${trackId}, ${playlist.id})` : 
+                        `addTrackToPlaylist(${trackId}, ${playlist.id})`;
+
+                    playlistsHtml += `
+                        <div class="list-group-item bg-secondary border-secondary d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${playlist.name}</strong>
+                                <br><small class="text-muted">${playlist.tracksCount} tracks</small>
+                            </div>
+                            <button class="btn ${buttonClass} btn-sm" onclick="${buttonAction}">
+                                <i class="fas fa-${buttonIcon} me-1"></i>${buttonText}
+                            </button>
+                        </div>
+                    `;
+                });
+                playlistsHtml += '</div>';
+            }
+            
+            document.getElementById('addToPlaylistList').innerHTML = playlistsHtml;
+        } else {
+            document.getElementById('addToPlaylistList').innerHTML = `
+                <div class="alert alert-danger">
+                    Error loading playlists: ${data.error}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        document.getElementById('addToPlaylistList').innerHTML = `
+            <div class="alert alert-danger">
+                An error occurred while loading playlists
+            </div>
+        `;
+        console.error('Error:', error);
+    });
+
+    // Show modal
+    new bootstrap.Modal(document.getElementById('addToPlaylistModal')).show();
+}
+
+// Add track to playlist
+function addTrackToPlaylist(trackId, playlistId) {
+    fetch('{{ path('app_library_add_track_to_playlist') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            trackId: trackId,
+            playlistId: playlistId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addToPlaylistModal'));
+            if (modal) {
+                modal.hide();
+            }
+        } else {
+            showToast('Error: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        showToast('An error occurred while adding track to playlist', 'error');
+        console.error('Error:', error);
+    });
+}
+
+// Remove track from playlist
+function removeTrackFromPlaylist(trackId, playlistId) {
+    fetch('{{ path('app_library_remove_track_from_playlist') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            trackId: trackId,
+            playlistId: playlistId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addToPlaylistModal'));
+            if (modal) {
+                modal.hide();
+            }
+        } else {
+            showToast('Error: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        showToast('An error occurred while removing track from playlist', 'error');
+        console.error('Error:', error);
+    });
+}
+
+// Show Add Tracks to Playlist Modal
+let currentPlaylistId = null;
+
+function showAddTracksToPlaylistModal(playlistId, playlistName) {
+    currentPlaylistId = playlistId;
+    document.getElementById('targetPlaylistName').textContent = playlistName;
+    
+    // Clear previous search
+    document.getElementById('trackSearchInput').value = '';
+    document.getElementById('trackSearchResults').innerHTML = `
+        <div class="text-center text-muted">
+            <i class="fas fa-search fa-3x mb-3"></i>
+            <p>Search for tracks to add to this playlist</p>
+        </div>
+    `;
+    
+    new bootstrap.Modal(document.getElementById('addTracksToPlaylistModal')).show();
+    
+    setTimeout(() => {
+        document.getElementById('trackSearchInput').focus();
+    }, 500);
+}
+
+// Search tracks for playlist
+function searchTracksForPlaylist() {
+    const query = document.getElementById('trackSearchInput').value;
+    
+    if (!currentPlaylistId) {
+        showToast('No playlist selected', 'error');
+        return;
+    }
+    
+    document.getElementById('trackSearchResults').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Searching...</span>
+            </div>
+        </div>
+    `;
+    
+    fetch(`{{ path('app_library_search_tracks') }}?q=${encodeURIComponent(query)}&playlist_id=${currentPlaylistId}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let resultsHtml = '';
+            
+            if (data.tracks.length === 0) {
+                resultsHtml = `
+                    <div class="text-center text-muted">
+                        <i class="fas fa-search fa-3x mb-3"></i>
+                        <p>No tracks found matching "${query}"</p>
+                    </div>
+                `;
+            } else {
+                resultsHtml = '<div class="list-group list-group-flush">';
+                data.tracks.forEach(track => {
+                    const buttonClass = track.inPlaylist ? 'btn-danger' : 'btn-success';
+                    const buttonIcon = track.inPlaylist ? 'minus' : 'plus';
+                    const buttonText = track.inPlaylist ? 'Remove' : 'Add';
+                    const buttonAction = track.inPlaylist ? 
+                        `removeTrackFromPlaylistSearch(${track.id})` : 
+                        `addTrackToPlaylistSearch(${track.id})`;
+                    
+                    const coverHtml = track.coverImage ? 
+                        `<img src="/uploads/covers/${track.coverImage}" alt="Cover" class="rounded me-3" width="40" height="40">` :
+                        `<div class="bg-gradient-primary rounded d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: linear-gradient(45deg, #667eea, #764ba2);">
+                            <i class="fas fa-music text-white"></i>
+                        </div>`;
+
+                    resultsHtml += `
+                        <div class="list-group-item bg-secondary border-secondary d-flex align-items-center">
+                            ${coverHtml}
+                            <div class="flex-grow-1">
+                                <strong>${track.title}</strong>
+                                <br><small class="text-muted">${track.artist} • ${track.duration}</small>
+                                <br><small class="text-muted">by ${track.uploadedBy}</small>
+                            </div>
+                            <button class="btn ${buttonClass} btn-sm ms-3" onclick="${buttonAction}">
+                                <i class="fas fa-${buttonIcon} me-1"></i>${buttonText}
+                            </button>
+                        </div>
+                    `;
+                });
+                resultsHtml += '</div>';
+            }
+            
+            document.getElementById('trackSearchResults').innerHTML = resultsHtml;
+        } else {
+            document.getElementById('trackSearchResults').innerHTML = `
+                <div class="alert alert-danger">
+                    Error searching tracks: ${data.error}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        document.getElementById('trackSearchResults').innerHTML = `
+            <div class="alert alert-danger">
+                An error occurred while searching tracks
+            </div>
+        `;
+        console.error('Error:', error);
+    });
+}
+
+// Add/Remove track functions for search modal
+function addTrackToPlaylistSearch(trackId) {
+    addTrackToPlaylist(trackId, currentPlaylistId);
+    setTimeout(() => {
+        searchTracksForPlaylist();
+    }, 500);
+}
+
+function removeTrackFromPlaylistSearch(trackId) {
+    removeTrackFromPlaylist(trackId, currentPlaylistId);
+    setTimeout(() => {
+        searchTracksForPlaylist();
+    }, 500);
+}
+
+// Enhanced search with Enter key
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('trackSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchTracksForPlaylist();
+            }
+        });
+    }
+});
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    let toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
+    }
+    
+    const toastId = 'toast_' + Date.now();
+    const bgClass = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-info';
+    
+    const toastHtml = `
+        <div id="${toastId}" class="toast ${bgClass} text-white" role="alert">
+            <div class="toast-body">
+                <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'} me-2"></i>
+                ${message}
+            </div>
+        </div>
+    `;
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+    toast.show();
+    
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastElement.remove();
+    });
+}
+</script>
 {% endblock %}

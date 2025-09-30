@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Track;
+use App\Entity\Playlist;
 use App\Service\FileUploadService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -37,12 +38,21 @@ class UploadController extends AbstractController
     #[Route('/track', name: 'app_upload_track')]
     public function uploadTrack(): Response
     {
+        // Get user's playlists
+        $user = $this->getUser();
+        $playlists = [];
+        if ($user) {
+            $playlists = $this->entityManager->getRepository(Playlist::class)
+                ->findBy(['owner' => $user], ['createdAt' => 'DESC']);
+        }
+
         return $this->render('upload/track.html.twig', [
             'title' => '',
             'artist' => '',
             'album' => '',
             'genre' => '',
-            'description' => ''
+            'description' => '',
+            'playlists' => $playlists
         ]);
     }
 
@@ -142,7 +152,8 @@ class UploadController extends AbstractController
                   ->setGenre($genre)
                   ->setDescription($description)
                   ->setAudioFile($audioFileName)
-                  ->setCoverImage($coverFileName);
+                  ->setCoverImage($coverFileName)
+                  ->setUploadedBy($this->getUser());
 
             $audioPath = $this->fileUploadService->getUploadDirectory() . '/tracks/' . $audioFileName;
             $duration = $this->getAudioDuration($audioPath);
@@ -151,6 +162,17 @@ class UploadController extends AbstractController
             }
 
             $this->entityManager->persist($track);
+            
+            // Handle playlist assignment if provided
+            if (!empty($album)) {
+                $playlist = $this->entityManager->getRepository(Playlist::class)
+                    ->findOneBy(['name' => $album, 'owner' => $this->getUser()]);
+                
+                if ($playlist) {
+                    $playlist->addTrack($track);
+                }
+            }
+
             $this->entityManager->flush();
 
             $this->addFlash('success', 'Track uploaded successfully!');

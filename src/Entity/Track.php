@@ -99,6 +99,13 @@ class Track
     private ?\DateTimeInterface $updatedAt = null;
 
     /**
+     * User who uploaded this track
+     */
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'tracks')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $uploadedBy = null;
+
+    /**
      * Playlists that contain this track (Many-to-Many relationship)
      */
     #[ORM\ManyToMany(targetEntity: Playlist::class, mappedBy: 'tracks')]
@@ -260,6 +267,17 @@ class Track
         $this->updatedAt = new \DateTime();
     }
 
+    public function getUploadedBy(): ?User
+    {
+        return $this->uploadedBy;
+    }
+
+    public function setUploadedBy(?User $uploadedBy): static
+    {
+        $this->uploadedBy = $uploadedBy;
+        return $this;
+    }
+
     // ========== PLAYLIST RELATIONSHIPS ==========
 
     /**
@@ -312,5 +330,32 @@ class Track
         $seconds = $this->duration % 60;
         
         return sprintf('%d:%02d', $minutes, $seconds);
+    }
+
+    /**
+     * Get HTML for cover image or default cover
+     * @param int $size Size in pixels (width and height)
+     * @param string $iconClass FontAwesome icon class for default cover
+     * @return string HTML string for cover display
+     */
+    public function getCoverHtml(int $size = 50, string $iconClass = 'fas fa-music'): string
+    {
+        if ($this->coverImage) {
+            return sprintf(
+                '<img src="/uploads/covers/%s" alt="Cover" class="rounded" width="%d" height="%d">',
+                htmlspecialchars($this->coverImage),
+                $size,
+                $size
+            );
+        }
+
+        return sprintf(
+            '<div class="bg-gradient-primary rounded d-flex align-items-center justify-content-center" style="width: %dpx; height: %dpx; background: linear-gradient(45deg, #667eea, #764ba2);">
+                <i class="%s text-white"></i>
+            </div>',
+            $size,
+            $size,
+            htmlspecialchars($iconClass)
+        );
     }
 }

@@ -45,9 +45,13 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="album" class="form-label">Album</label>
-                                    <input type="text" class="form-control" id="album" name="album" 
-                                           value="{{ album ?? '' }}">
+                                    <label for="album" class="form-label">Playlist</label>
+                                    <select class="form-control" id="album" name="album">
+                                        <option value="">No playlist</option>
+                                        {% for playlist in playlists %}
+                                            <option value="{{ playlist.name }}" {{ (album ?? '') == playlist.name ? 'selected' : '' }}>{{ playlist.name }}</option>
+                                        {% endfor %}
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-md-6">

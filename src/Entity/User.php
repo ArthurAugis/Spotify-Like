@@ -84,10 +84,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Playlist::class, mappedBy: 'owner', orphanRemoval: true)]
     private Collection $playlists;
 
+    #[ORM\OneToMany(targetEntity: Track::class, mappedBy: 'uploadedBy', orphanRemoval: true)]
+    private Collection $tracks;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->playlists = new ArrayCollection();
+        $this->tracks = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -238,6 +242,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         if ($this->playlists->removeElement($playlist)) {
             if ($playlist->getOwner() === $this) {
                 $playlist->setOwner(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Track>
+     */
+    public function getTracks(): Collection
+    {
+        return $this->tracks;
+    }
+
+    public function addTrack(Track $track): static
+    {
+        if (!$this->tracks->contains($track)) {
+            $this->tracks->add($track);
+            $track->setUploadedBy($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTrack(Track $track): static
+    {
+        if ($this->tracks->removeElement($track)) {
+            if ($track->getUploadedBy() === $this) {
+                $track->setUploadedBy(null);
             }
         }
 

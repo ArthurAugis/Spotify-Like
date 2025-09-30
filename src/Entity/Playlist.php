@@ -96,6 +96,11 @@ class Playlist
         return $this->isPublic;
     }
 
+    public function getIsPublic(): bool
+    {
+        return $this->isPublic;
+    }
+
     public function setIsPublic(bool $isPublic): static
     {
         $this->isPublic = $isPublic;
@@ -135,9 +140,20 @@ class Playlist
         return $this->owner;
     }
 
+    public function getCreatedBy(): ?User
+    {
+        return $this->owner;
+    }
+
     public function setOwner(?User $owner): static
     {
         $this->owner = $owner;
+        return $this;
+    }
+
+    public function setCreatedBy(?User $createdBy): static
+    {
+        $this->owner = $createdBy;
         return $this;
     }
 
@@ -191,5 +207,32 @@ class Playlist
             $seconds = $totalSeconds % 60;
             return sprintf('%d:%02d:%02d', $hours, $minutes, $seconds);
         }
+    }
+
+    /**
+     * Get HTML for cover image or default cover
+     * @param int $size Size in pixels (width and height)
+     * @param string $iconClass FontAwesome icon class for default cover
+     * @return string HTML string for cover display
+     */
+    public function getCoverHtml(int $size = 50, string $iconClass = 'fas fa-list'): string
+    {
+        if ($this->coverImage) {
+            return sprintf(
+                '<img src="/uploads/covers/%s" alt="Cover" class="rounded" width="%d" height="%d">',
+                htmlspecialchars($this->coverImage),
+                $size,
+                $size
+            );
+        }
+
+        return sprintf(
+            '<div class="bg-gradient-primary rounded d-flex align-items-center justify-content-center" style="width: %dpx; height: %dpx; background: linear-gradient(45deg, #667eea, #764ba2);">
+                <i class="%s text-white"></i>
+            </div>',
+            $size,
+            $size,
+            htmlspecialchars($iconClass)
+        );
     }
 }

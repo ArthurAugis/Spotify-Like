@@ -28,9 +28,24 @@ class HomeController extends AbstractController
     #[Route('/', name: 'app_home')]
     public function index(EntityManagerInterface $entityManager): Response
     {
-        // Fetch recent playlists from database (max 4, ordered by creation date)
-        $recentPlaylists = $entityManager->getRepository(Playlist::class)
+        // Get current user
+        $currentUser = $this->getUser();
+        
+        // Fetch recent playlists: public playlists + user's private playlists if logged in
+        $queryBuilder = $entityManager->getRepository(Playlist::class)
             ->createQueryBuilder('p')
+            ->where('p.isPublic = :isPublic');
+        
+        // If user is logged in, also include their private playlists
+        if ($currentUser) {
+            $queryBuilder
+                ->orWhere('p.owner = :currentUser AND p.isPublic = :isPrivate')
+                ->setParameter('currentUser', $currentUser)
+                ->setParameter('isPrivate', false);
+        }
+        
+        $recentPlaylists = $queryBuilder
+            ->setParameter('isPublic', true)
             ->orderBy('p.createdAt', 'DESC')
             ->setMaxResults(4)
             ->getQuery()
