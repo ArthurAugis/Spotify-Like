@@ -1,0 +1,143 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Upload Track - Onzeer{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-cloud-upload-alt me-2"></i>
+                        Uploader une nouvelle track
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if errors is defined and errors %}
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                {% for error in errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    <form action="{{ path('app_upload_track_submit') }}" method="post" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Titre *</label>
+                                    <input type="text" class="form-control" id="title" name="title" 
+                                           value="{{ title ?? '' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="artist" class="form-label">Artiste *</label>
+                                    <input type="text" class="form-control" id="artist" name="artist" 
+                                           value="{{ artist ?? '' }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="album" class="form-label">Album</label>
+                                    <input type="text" class="form-control" id="album" name="album" 
+                                           value="{{ album ?? '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="genre" class="form-label">Genre</label>
+                                    <select class="form-control" id="genre" name="genre">
+                                        <option value="">Sélectionner un genre</option>
+                                        <option value="Pop" {{ (genre ?? '') == 'Pop' ? 'selected' : '' }}>Pop</option>
+                                        <option value="Rock" {{ (genre ?? '') == 'Rock' ? 'selected' : '' }}>Rock</option>
+                                        <option value="Hip-Hop" {{ (genre ?? '') == 'Hip-Hop' ? 'selected' : '' }}>Hip-Hop</option>
+                                        <option value="R&B" {{ (genre ?? '') == 'R&B' ? 'selected' : '' }}>R&B</option>
+                                        <option value="Electronic" {{ (genre ?? '') == 'Electronic' ? 'selected' : '' }}>Electronic</option>
+                                        <option value="Jazz" {{ (genre ?? '') == 'Jazz' ? 'selected' : '' }}>Jazz</option>
+                                        <option value="Classical" {{ (genre ?? '') == 'Classical' ? 'selected' : '' }}>Classical</option>
+                                        <option value="Country" {{ (genre ?? '') == 'Country' ? 'selected' : '' }}>Country</option>
+                                        <option value="Indie" {{ (genre ?? '') == 'Indie' ? 'selected' : '' }}>Indie</option>
+                                        <option value="Other" {{ (genre ?? '') == 'Other' ? 'selected' : '' }}>Autre</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" 
+                                      placeholder="Décrivez votre track...">{{ description ?? '' }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="audio_file" class="form-label">Fichier Audio * (.mp3, .wav, .ogg)</label>
+                                    <input type="file" class="form-control" id="audio_file" name="audio_file" 
+                                           accept="audio/*" required>
+                                    <div class="form-text">Taille max : 50MB</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="cover_file" class="form-label">Image de couverture * (.jpg, .png, .gif)</label>
+                                    <input type="file" class="form-control" id="cover_file" name="cover_file" 
+                                           accept="image/*" required>
+                                    <div class="form-text">Obligatoire - Taille max : 10MB</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ path('app_home') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Uploader la track
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Conseils pour l'upload -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Conseils pour un bon upload
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-music me-2 text-primary"></i>Audio</h6>
+                            <ul class="small">
+                                <li>Formats supportés : MP3, WAV, OGG</li>
+                                <li>Qualité recommandée : 320 kbps</li>
+                                <li>Durée max : 10 minutes</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-image me-2 text-success"></i>Couverture *</h6>
+                            <ul class="small">
+                                <li>Formats : JPG, PNG, GIF</li>
+                                <li>Résolution recommandée : 1000x1000px</li>
+                                <li>Poids max : 10MB</li>
+                                <li><strong>Obligatoire pour tous les uploads</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inscription - Onzeer{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h3>🎵 Rejoindre Onzeer</h3>
+                </div>
+                <div class="card-body">
+                    {{ form_start(registrationForm) }}
+                        
+                        <div class="mb-3">
+                            {{ form_label(registrationForm.firstName) }}
+                            {{ form_widget(registrationForm.firstName) }}
+                            {{ form_errors(registrationForm.firstName) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(registrationForm.lastName) }}
+                            {{ form_widget(registrationForm.lastName) }}
+                            {{ form_errors(registrationForm.lastName) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(registrationForm.email) }}
+                            {{ form_widget(registrationForm.email) }}
+                            {{ form_errors(registrationForm.email) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(registrationForm.plainPassword.first) }}
+                            {{ form_widget(registrationForm.plainPassword.first) }}
+                            {{ form_errors(registrationForm.plainPassword.first) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(registrationForm.plainPassword.second) }}
+                            {{ form_widget(registrationForm.plainPassword.second) }}
+                            {{ form_errors(registrationForm.plainPassword.second) }}
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            {{ form_widget(registrationForm.agreeTerms) }}
+                            {{ form_label(registrationForm.agreeTerms) }}
+                            {{ form_errors(registrationForm.agreeTerms) }}
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">S'inscrire</button>
+                        </div>
+                    {{ form_end(registrationForm) }}
+
+                    <div class="text-center mt-3">
+                        <p>Déjà un compte ? <a href="{{ path('app_login') }}">Se connecter</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

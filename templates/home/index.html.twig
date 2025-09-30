@@ -1,0 +1,246 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil - Onzeer{% endblock %}
+
+{% block body %}
+<div class="container-fluid text-white">
+    <!-- Header avec recherche -->
+    <div class="row">
+        <div class="col-12 py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h4 mb-0">
+                    {% if app.user %}
+                        Bonjour {{ app.user.firstName }} 👋
+                    {% else %}
+                        Découvrez Onzeer
+                    {% endif %}
+                </h1>
+                <div class="d-flex gap-2">
+                    <input type="search" class="form-control bg-secondary border-0 text-white" placeholder="Rechercher musiques, artistes..." style="width: 300px;">
+                    <button class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Playlists Récentes -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 mb-0">Récemment écoutées</h2>
+                <a href="#" class="text-decoration-none text-primary">Voir tout</a>
+            </div>
+            <div class="row g-3">
+                {% for playlist in recentPlaylists %}
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="card bg-secondary border-0 playlist-card">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ playlist.coverImage ? '/uploads/covers/' ~ playlist.coverImage : 'https://via.placeholder.com/60x60/667eea/fff?text=' ~ playlist.name|slice(0,1) }}" 
+                                     alt="{{ playlist.name }}" class="rounded me-3" width="60" height="60">
+                                <div>
+                                    <h6 class="card-title text-white mb-1">{{ playlist.name }}</h6>
+                                    <p class="card-text text-muted small mb-0">{{ playlist.tracks|length }} titres • {{ playlist.getFormattedTotalDuration() }}</p>
+                                </div>
+                                <button class="btn btn-success btn-sm ms-auto play-btn">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12">
+                    <div class="text-center py-4">
+                        <i class="fas fa-music fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucune playlist pour le moment</h5>
+                        <p class="text-muted">Créez votre première playlist !</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Top Tracks -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 mb-0">Tendances actuelles</h2>
+                <a href="#" class="text-decoration-none text-primary">Voir tout</a>
+            </div>
+            <div class="bg-secondary rounded p-3">
+                {% for track in topTracks %}
+                <div class="d-flex align-items-center py-2 track-item">
+                    <div class="me-3 text-center" style="width: 30px;">
+                        <span class="text-muted">{{ loop.index }}</span>
+                    </div>
+                    <img src="{{ track.coverImage ? '/uploads/covers/' ~ track.coverImage : 'https://via.placeholder.com/40x40/ff6b6b/fff?text=' ~ track.title|slice(0,1) }}" 
+                         alt="{{ track.title }}" class="rounded me-3" width="40" height="40">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0 text-white">{{ track.title }}</h6>
+                        <small class="text-muted">{{ track.artist }}</small>
+                    </div>
+                    <div class="me-3">
+                        <small class="text-muted">{{ track.album ?: 'Single' }}</small>
+                    </div>
+                    <div class="me-3">
+                        <button class="btn btn-link text-muted btn-sm">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    </div>
+                    <div class="me-3">
+                        <small class="text-muted">{{ track.getFormattedDuration() }}</small>
+                    </div>
+                    <div class="me-2">
+                        <small class="text-muted">{{ track.playCount }} écoutes</small>
+                    </div>
+                    <button class="btn btn-success btn-sm play-btn">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+                {% if not loop.last %}
+                <hr class="my-2 border-dark">
+                {% endif %}
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucun titre populaire</h5>
+                    <p class="text-muted">Uploadez des musiques pour voir les tendances !</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Nouveautés -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 mb-0">Nouveautés</h2>
+                <a href="#" class="text-decoration-none text-primary">Voir tout</a>
+            </div>
+            <div class="row g-4">
+                {% for track in newReleases %}
+                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+                    <div class="album-card">
+                        <div class="position-relative">
+                            <img src="{{ track.coverImage ? '/uploads/covers/' ~ track.coverImage : 'https://via.placeholder.com/200x200/feca57/fff?text=' ~ track.title|slice(0,2) }}" 
+                                 alt="{{ track.title }}" class="w-100 rounded shadow">
+                            <button class="btn btn-success position-absolute bottom-0 end-0 m-2 play-btn-hover">
+                                <i class="fas fa-play"></i>
+                            </button>
+                        </div>
+                        <div class="mt-2">
+                            <h6 class="text-white mb-1 text-truncate">{{ track.title }}</h6>
+                            <small class="text-muted">{{ track.artist }}</small>
+                            <br><small class="text-muted">{{ track.createdAt|date('d/m/Y') }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12">
+                    <div class="text-center py-4">
+                        <i class="fas fa-compact-disc fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucune nouveauté</h5>
+                        <p class="text-muted">Soyez le premier à uploader de la musique !</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Genres -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="h5 mb-3">Parcourir par genre</h2>
+            <div class="row g-3">
+                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+                    <div class="genre-card bg-gradient-pop rounded p-3 text-center">
+                        <h6 class="text-white mb-0">Pop</h6>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+                    <div class="genre-card bg-gradient-rock rounded p-3 text-center">
+                        <h6 class="text-white mb-0">Rock</h6>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+                    <div class="genre-card bg-gradient-rap rounded p-3 text-center">
+                        <h6 class="text-white mb-0">Hip-Hop</h6>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+                    <div class="genre-card bg-gradient-electronic rounded p-3 text-center">
+                        <h6 class="text-white mb-0">Électro</h6>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+                    <div class="genre-card bg-gradient-jazz rounded p-3 text-center">
+                        <h6 class="text-white mb-0">Jazz</h6>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+                    <div class="genre-card bg-gradient-classical rounded p-3 text-center">
+                        <h6 class="text-white mb-0">Classique</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.playlist-card:hover {
+    background-color: #495057 !important;
+    cursor: pointer;
+}
+
+.track-item:hover {
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.album-card {
+    transition: transform 0.3s ease;
+}
+
+.album-card:hover {
+    transform: scale(1.05);
+    cursor: pointer;
+}
+
+.play-btn-hover {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.album-card:hover .play-btn-hover {
+    opacity: 1;
+}
+
+.genre-card {
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.genre-card:hover {
+    transform: scale(1.05);
+}
+
+.bg-gradient-pop { background: linear-gradient(45deg, #667eea, #764ba2); }
+.bg-gradient-rock { background: linear-gradient(45deg, #f093fb, #f5576c); }
+.bg-gradient-rap { background: linear-gradient(45deg, #4facfe, #00f2fe); }
+.bg-gradient-electronic { background: linear-gradient(45deg, #43e97b, #38f9d7); }
+.bg-gradient-jazz { background: linear-gradient(45deg, #fa709a, #fee140); }
+.bg-gradient-classical { background: linear-gradient(45deg, #a8edea, #fed6e3); }
+</style>
+{% endblock %}

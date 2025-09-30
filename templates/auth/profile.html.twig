@@ -1,0 +1,187 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon Profil - Onzeer{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h3>🎵 Mon Profil</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="mb-3 position-relative">
+                                {% if user.profilePicture %}
+                                    <img src="/uploads/profiles/{{ user.profilePicture }}" 
+                                         alt="Photo de profil" 
+                                         class="rounded-circle" 
+                                         width="120" height="120"
+                                         id="profile-avatar">
+                                {% else %}
+                                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold" 
+                                         style="width: 120px; height: 120px; background: linear-gradient(45deg, #667eea, #764ba2); font-size: 2.5rem;"
+                                         id="profile-avatar">
+                                        {{ user.initial }}
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Bouton pour changer la photo -->
+                                <button class="btn btn-primary btn-sm position-absolute bottom-0 end-0 rounded-circle" 
+                                        style="width: 35px; height: 35px;"
+                                        onclick="document.getElementById('profile-picture-input').click()">
+                                    <i class="fas fa-camera"></i>
+                                </button>
+                                
+                                <!-- Input file caché -->
+                                <input type="file" id="profile-picture-input" class="d-none" 
+                                       accept="image/*" onchange="uploadProfilePicture(this)">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h4>{{ user.fullName }}</h4>
+                            <p class="text-muted">{{ user.email }}</p>
+                            
+                            <div class="row mt-4">
+                                <div class="col-sm-6">
+                                    <strong>Prénom:</strong><br>
+                                    {{ user.firstName }}
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Nom:</strong><br>
+                                    {{ user.lastName }}
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-sm-6">
+                                    <strong>Email:</strong><br>
+                                    {{ user.email }}
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Membre depuis:</strong><br>
+                                    {{ user.createdAt|date('d/m/Y') }}
+                                </div>
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-sm-6">
+                                    <strong>Statut:</strong><br>
+                                    {% if user.isVerified %}
+                                        <span class="badge bg-success">Compte vérifié</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">En attente de vérification</span>
+                                    {% endif %}
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Rôles:</strong><br>
+                                    {% for role in user.roles %}
+                                        <span class="badge bg-primary">{{ role }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="text-center">
+                        <a href="{{ path('app_home') }}" class="btn btn-primary me-2">
+                            <i class="fas fa-home"></i> Accueil
+                        </a>
+                        <a href="{{ path('app_logout') }}" class="btn btn-outline-danger">
+                            <i class="fas fa-sign-out-alt"></i> Se déconnecter
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function uploadProfilePicture(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        
+        if (!file.type.startsWith('image/')) {
+            alert('Veuillez sélectionner une image');
+            return;
+        }
+        
+        if (file.size > 5 * 1024 * 1024) {
+            alert('L\'image est trop volumineuse (5MB max)');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('profile_picture', file);
+        
+        // Afficher un indicateur de chargement
+        const avatar = document.getElementById('profile-avatar');
+        const originalContent = avatar.innerHTML || avatar.src;
+        avatar.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        
+        fetch('{{ path('app_upload_profile_picture') }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (avatar.tagName === 'IMG') {
+                    avatar.src = data.avatar_url + '?t=' + new Date().getTime();
+                } else {
+                    const newImg = document.createElement('img');
+                    newImg.src = data.avatar_url + '?t=' + new Date().getTime();
+                    newImg.alt = 'Photo de profil';
+                    newImg.className = 'rounded-circle';
+                    newImg.width = 120;
+                    newImg.height = 120;
+                    newImg.id = 'profile-avatar';
+                    avatar.parentNode.replaceChild(newImg, avatar);
+                }
+                
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success alert-dismissible fade show mt-3';
+                alert.innerHTML = `
+                    Photo de profil mise à jour avec succès !
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.card-body').prepend(alert);
+                
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        alert.remove();
+                    }
+                }, 3000);
+                
+            } else {
+                // Restaurer le contenu original
+                if (avatar.tagName === 'IMG') {
+                    avatar.src = originalContent;
+                } else {
+                    avatar.innerHTML = originalContent;
+                }
+                alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+            }
+        })
+        .catch(error => {
+            // Restaurer le contenu original
+            if (avatar.tagName === 'IMG') {
+                avatar.src = originalContent;
+            } else {
+                avatar.innerHTML = originalContent;
+            }
+            alert('Erreur lors de l\'upload');
+            console.error('Erreur:', error);
+        });
+    }
+}
+</script>
+{% endblock %}
