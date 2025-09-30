@@ -17,8 +17,11 @@ services:
     App\:
         resource: '../src/'
 
-    # Configuration du service d'upload de fichiers
     App\Service\FileUploadService:
+        arguments:
+            $uploadsDirectory: '%uploads_directory%'
+
+    App\Service\LibraryService:
         arguments:
             $uploadsDirectory: '%uploads_directory%'
 
