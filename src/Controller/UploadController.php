@@ -81,16 +81,16 @@ class UploadController extends AbstractController
         
         // Validate required fields
         if (!$title) {
-            $errors[] = 'Le titre est obligatoire';
+            $errors[] = 'Title is required';
         }
         if (!$artist) {
-            $errors[] = 'L\'artiste est obligatoire';
+            $errors[] = 'Artist is required';
         }
         if (!$audioFile) {
-            $errors[] = 'Le fichier audio est obligatoire';
+            $errors[] = 'Audio file is required';
         }
         if (!$coverFile) {
-            $errors[] = 'L\'image de couverture est obligatoire';
+            $errors[] = 'Cover image is required';
         }
 
         // Validate audio file format and integrity
@@ -98,10 +98,10 @@ class UploadController extends AbstractController
             try {
                 $audioMimeType = $audioFile->getMimeType();
                 if (!in_array($audioMimeType, ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg'])) {
-                    $errors[] = 'Format audio non supporté. Utilisez MP3, WAV ou OGG.';
+                    $errors[] = 'Audio format not supported. Use MP3, WAV or OGG.';
                 }
             } catch (\Exception $e) {
-                $errors[] = 'Impossible de vérifier le fichier audio. Assurez-vous qu\'il s\'agit d\'un fichier valide.';
+                $errors[] = 'Unable to verify audio file. Make sure it is a valid file.';
             }
         }
 
@@ -110,10 +110,10 @@ class UploadController extends AbstractController
             try {
                 $coverMimeType = $coverFile->getMimeType();
                 if (!in_array($coverMimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/avif'])) {
-                    $errors[] = 'Format image non supporté. Utilisez JPG, PNG, GIF ou AVIF.';
+                    $errors[] = 'Image format not supported. Use JPG, PNG, GIF or AVIF.';
                 }
             } catch (\Exception $e) {
-                $errors[] = 'Impossible de vérifier le fichier image. Assurez-vous qu\'il s\'agit d\'un fichier valide.';
+                $errors[] = 'Unable to verify image file. Make sure it is a valid file.';
             }
         }
 
@@ -153,11 +153,11 @@ class UploadController extends AbstractController
             $this->entityManager->persist($track);
             $this->entityManager->flush();
 
-            $this->addFlash('success', 'Track uploadée avec succès !');
+            $this->addFlash('success', 'Track uploaded successfully!');
             return $this->redirectToRoute('app_home');
 
         } catch (\Exception $e) {
-            $errors[] = 'Erreur lors de l\'upload : ' . $e->getMessage();
+            $errors[] = 'Upload error: ' . $e->getMessage();
             return $this->render('upload/track.html.twig', [
                 'errors' => $errors,
                 'title' => $title,
@@ -174,17 +174,17 @@ class UploadController extends AbstractController
     {
         $user = $this->getUser();
         if (!$user) {
-            return $this->json(['error' => 'Non autorisé'], 401);
+            return $this->json(['error' => 'Unauthorized'], 401);
         }
 
         $file = $request->files->get('profile_picture');
         
         if (!$file) {
-            return $this->json(['error' => 'Aucun fichier sélectionné'], 400);
+            return $this->json(['error' => 'No file selected'], 400);
         }
 
         if (!in_array($file->getMimeType(), ['image/jpeg', 'image/png', 'image/gif'])) {
-            return $this->json(['error' => 'Format non supporté'], 400);
+            return $this->json(['error' => 'Format not supported'], 400);
         }
 
         try {
@@ -203,7 +203,7 @@ class UploadController extends AbstractController
             ]);
 
         } catch (\Exception $e) {
-            return $this->json(['error' => 'Erreur lors de l\'upload'], 500);
+            return $this->json(['error' => 'Upload error'], 500);
         }
     }
 

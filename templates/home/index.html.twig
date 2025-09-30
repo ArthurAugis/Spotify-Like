@@ -1,22 +1,22 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Accueil - Onzeer{% endblock %}
+{% block title %}Home - Onzeer{% endblock %}
 
 {% block body %}
 <div class="container-fluid text-white">
-    <!-- Header avec recherche -->
+    <!-- Search header -->
     <div class="row">
         <div class="col-12 py-3">
             <div class="d-flex justify-content-between align-items-center">
                 <h1 class="h4 mb-0">
                     {% if app.user %}
-                        Bonjour {{ app.user.firstName }} 👋
+                        Hello {{ app.user.firstName }} 👋
                     {% else %}
-                        Découvrez Onzeer
+                        Discover Onzeer
                     {% endif %}
                 </h1>
                 <div class="d-flex gap-2">
-                    <input type="search" class="form-control bg-secondary border-0 text-white" placeholder="Rechercher musiques, artistes..." style="width: 300px;">
+                    <input type="search" class="form-control bg-secondary border-0 text-white" placeholder="Search music, artists..." style="width: 300px;">
                     <button class="btn btn-primary">
                         <i class="fas fa-search"></i>
                     </button>
@@ -25,12 +25,12 @@
         </div>
     </div>
 
-    <!-- Section Playlists Récentes -->
+    <!-- Recent Playlists Section -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="h5 mb-0">Récemment écoutées</h2>
-                <a href="#" class="text-decoration-none text-primary">Voir tout</a>
+                <h2 class="h5 mb-0">Recently Played</h2>
+                <a href="#" class="text-decoration-none text-primary">View All</a>
             </div>
             <div class="row g-3">
                 {% for playlist in recentPlaylists %}
@@ -42,7 +42,7 @@
                                      alt="{{ playlist.name }}" class="rounded me-3" width="60" height="60">
                                 <div>
                                     <h6 class="card-title text-white mb-1">{{ playlist.name }}</h6>
-                                    <p class="card-text text-muted small mb-0">{{ playlist.tracks|length }} titres • {{ playlist.getFormattedTotalDuration() }}</p>
+                                    <p class="card-text text-muted small mb-0">{{ playlist.tracks|length }} tracks • {{ playlist.getFormattedTotalDuration() }}</p>
                                 </div>
                                 <button class="btn btn-success btn-sm ms-auto play-btn">
                                     <i class="fas fa-play"></i>
@@ -55,8 +55,8 @@
                 <div class="col-12">
                     <div class="text-center py-4">
                         <i class="fas fa-music fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">Aucune playlist pour le moment</h5>
-                        <p class="text-muted">Créez votre première playlist !</p>
+                        <h5 class="text-muted">No playlists yet</h5>
+                        <p class="text-muted">Create your first playlist!</p>
                     </div>
                 </div>
                 {% endfor %}
@@ -68,8 +68,8 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="h5 mb-0">Tendances actuelles</h2>
-                <a href="#" class="text-decoration-none text-primary">Voir tout</a>
+                <h2 class="h5 mb-0">Trending Now</h2>
+                <a href="#" class="text-decoration-none text-primary">View All</a>
             </div>
             <div class="bg-secondary rounded p-3">
                 {% for track in topTracks %}
@@ -95,7 +95,7 @@
                         <small class="text-muted">{{ track.getFormattedDuration() }}</small>
                     </div>
                     <div class="me-2">
-                        <small class="text-muted">{{ track.playCount }} écoutes</small>
+                        <small class="text-muted">{{ track.playCount }} plays</small>
                     </div>
                     <button class="btn btn-success btn-sm play-btn">
                         <i class="fas fa-play"></i>
@@ -107,20 +107,20 @@
                 {% else %}
                 <div class="text-center py-4">
                     <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
-                    <h5 class="text-muted">Aucun titre populaire</h5>
-                    <p class="text-muted">Uploadez des musiques pour voir les tendances !</p>
+                    <h5 class="text-muted">No popular tracks</h5>
+                    <p class="text-muted">Upload music to see trends!</p>
                 </div>
                 {% endfor %}
             </div>
         </div>
     </div>
 
-    <!-- Section Nouveautés -->
+    <!-- New Releases Section -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="h5 mb-0">Nouveautés</h2>
-                <a href="#" class="text-decoration-none text-primary">Voir tout</a>
+                <h2 class="h5 mb-0">New Releases</h2>
+                <a href="#" class="text-decoration-none text-primary">View All</a>
             </div>
             <div class="row g-4">
                 {% for track in newReleases %}
@@ -144,8 +144,8 @@
                 <div class="col-12">
                     <div class="text-center py-4">
                         <i class="fas fa-compact-disc fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">Aucune nouveauté</h5>
-                        <p class="text-muted">Soyez le premier à uploader de la musique !</p>
+                        <h5 class="text-muted">No new releases</h5>
+                        <p class="text-muted">Be the first to upload music!</p>
                     </div>
                 </div>
                 {% endfor %}
@@ -156,7 +156,7 @@
     <!-- Section Genres -->
     <div class="row mb-4">
         <div class="col-12">
-            <h2 class="h5 mb-3">Parcourir par genre</h2>
+            <h2 class="h5 mb-3">Browse by Genre</h2>
             <div class="row g-3">
                 <div class="col-lg-2 col-md-3 col-sm-4 col-6">
                     <div class="genre-card bg-gradient-pop rounded p-3 text-center">
@@ -175,7 +175,7 @@
                 </div>
                 <div class="col-lg-2 col-md-3 col-sm-4 col-6">
                     <div class="genre-card bg-gradient-electronic rounded p-3 text-center">
-                        <h6 class="text-white mb-0">Électro</h6>
+                        <h6 class="text-white mb-0">Electronic</h6>
                     </div>
                 </div>
                 <div class="col-lg-2 col-md-3 col-sm-4 col-6">

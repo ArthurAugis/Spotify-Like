@@ -19,7 +19,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
-#[UniqueEntity(fields: ['email'], message: 'Cette adresse email est déjà utilisée.')]
+#[UniqueEntity(fields: ['email'], message: 'This email address is already in use.')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     /**
@@ -34,8 +34,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * User email address (also used as username for authentication)
      */
     #[ORM\Column(length: 180, unique: true)]
-    #[Assert\NotBlank(message: 'L\'adresse email est obligatoire.')]
-    #[Assert\Email(message: 'L\'adresse email n\'est pas valide.')]
+    #[Assert\NotBlank(message: 'Email address is required.')]
+    #[Assert\Email(message: 'Email address is not valid.')]
     private ?string $email = null;
 
     /**
@@ -54,16 +54,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * User's first name
      */
     #[ORM\Column(length: 100)]
-    #[Assert\NotBlank(message: 'Le nom est obligatoire.')]
-    #[Assert\Length(min: 2, max: 100, minMessage: 'Le nom doit faire au moins 2 caractères.')]
+    #[Assert\NotBlank(message: 'First name is required.')]
+    #[Assert\Length(min: 2, max: 100, minMessage: 'First name must be at least 2 characters long.')]
     private ?string $firstName = null;
 
     /**
      * User's last name
      */
     #[ORM\Column(length: 100)]
-    #[Assert\NotBlank(message: 'Le prénom est obligatoire.')]
-    #[Assert\Length(min: 2, max: 100, minMessage: 'Le prénom doit faire au moins 2 caractères.')]
+    #[Assert\NotBlank(message: 'Last name is required.')]
+    #[Assert\Length(min: 2, max: 100, minMessage: 'Last name must be at least 2 characters long.')]
     private ?string $lastName = null;
 
     /**

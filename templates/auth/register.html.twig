@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Inscription - Onzeer{% endblock %}
+{% block title %}Sign Up - Onzeer{% endblock %}
 
 {% block body %}
 <div class="container mt-5">
@@ -50,12 +50,12 @@
                         </div>
 
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-success">S'inscrire</button>
+                            <button type="submit" class="btn btn-success">Sign Up</button>
                         </div>
                     {{ form_end(registrationForm) }}
 
                     <div class="text-center mt-3">
-                        <p>Déjà un compte ? <a href="{{ path('app_login') }}">Se connecter</a></p>
+                        <p>Already have an account? <a href="{{ path('app_login') }}">Login</a></p>
                     </div>
                 </div>
             </div>

@@ -21,55 +21,55 @@ class RegistrationFormType extends AbstractType
     {
         $builder
             ->add('firstName', TextType::class, [
-                'label' => 'Prénom',
+                'label' => 'First Name',
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'Votre prénom'
+                    'placeholder' => 'Your first name'
                 ],
                 'constraints' => [
                     new NotBlank([
-                        'message' => 'Veuillez entrer votre prénom',
+                        'message' => 'Please enter your first name',
                     ]),
                     new Length([
                         'min' => 2,
-                        'minMessage' => 'Votre prénom doit faire au moins {{ limit }} caractères',
+                        'minMessage' => 'Your first name must be at least {{ limit }} characters long',
                         'max' => 100,
                     ]),
                 ],
             ])
             ->add('lastName', TextType::class, [
-                'label' => 'Nom',
+                'label' => 'Last Name',
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'Votre nom'
+                    'placeholder' => 'Your last name'
                 ],
                 'constraints' => [
                     new NotBlank([
-                        'message' => 'Veuillez entrer votre nom',
+                        'message' => 'Please enter your last name',
                     ]),
                     new Length([
                         'min' => 2,
-                        'minMessage' => 'Votre nom doit faire au moins {{ limit }} caractères',
+                        'minMessage' => 'Your last name must be at least {{ limit }} characters long',
                         'max' => 100,
                     ]),
                 ],
             ])
             ->add('email', EmailType::class, [
-                'label' => 'Adresse email',
+                'label' => 'Email Address',
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'votre.email@exemple.com'
+                    'placeholder' => 'your.email@example.com'
                 ]
             ])
             ->add('agreeTerms', CheckboxType::class, [
-                'label' => 'J\'accepte les conditions d\'utilisation',
+                'label' => 'I agree to the terms of use',
                 'mapped' => false,
                 'attr' => [
                     'class' => 'form-check-input'
                 ],
                 'constraints' => [
                     new IsTrue([
-                        'message' => 'Vous devez accepter nos conditions.',
+                        'message' => 'You must accept our terms.',
                     ]),
                 ],
             ])
@@ -77,29 +77,29 @@ class RegistrationFormType extends AbstractType
                 'type' => PasswordType::class,
                 'mapped' => false,
                 'first_options' => [
-                    'label' => 'Mot de passe',
+                    'label' => 'Password',
                     'attr' => [
                         'class' => 'form-control',
-                        'placeholder' => 'Votre mot de passe',
+                        'placeholder' => 'Your password',
                         'autocomplete' => 'new-password'
                     ]
                 ],
                 'second_options' => [
-                    'label' => 'Confirmer le mot de passe',
+                    'label' => 'Confirm Password',
                     'attr' => [
                         'class' => 'form-control',
-                        'placeholder' => 'Confirmer votre mot de passe',
+                        'placeholder' => 'Confirm your password',
                         'autocomplete' => 'new-password'
                     ]
                 ],
-                'invalid_message' => 'Les mots de passe doivent être identiques.',
+                'invalid_message' => 'The passwords must be identical.',
                 'constraints' => [
                     new NotBlank([
-                        'message' => 'Veuillez entrer un mot de passe',
+                        'message' => 'Please enter a password',
                     ]),
                     new Length([
                         'min' => 6,
-                        'minMessage' => 'Votre mot de passe doit faire au moins {{ limit }} caractères',
+                        'minMessage' => 'Your password must be at least {{ limit }} characters long',
                         'max' => 4096,
                     ]),
                 ],
