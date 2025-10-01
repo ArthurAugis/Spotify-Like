@@ -27,13 +27,6 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * All methods require user authentication and operate only on
  * the authenticated user's content for security.
  */
- * Handles user's uploaded tracks and created playlists management:
- * - Display user's tracks and playlists
- * - Edit track information
- * - Delete tracks
- * - Create/edit/delete playlists
- * - Add/remove tracks from playlists
- */
 #[Route('/library')]
 #[IsGranted('ROLE_USER')]
 class LibraryController extends AbstractController
