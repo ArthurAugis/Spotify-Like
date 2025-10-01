@@ -1,4 +1,6 @@
 
+# Onzeer Music Platform - Git Ignore Configuration
+
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php
@@ -18,3 +20,43 @@
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
+
+# User uploaded content (keep directories, ignore files)
+/public/uploads/audio/*
+/public/uploads/covers/*
+/public/uploads/profiles/*
+!/public/uploads/audio/.gitkeep
+!/public/uploads/covers/.gitkeep
+!/public/uploads/profiles/.gitkeep
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node modules (if using npm/yarn for assets)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.backup
+*.bak
+*.tmp

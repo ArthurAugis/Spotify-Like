@@ -1,0 +1,239 @@
+<!--
+    Search Results Page
+    
+    Purpose: Display search results across multiple content types
+    Features:
+    - Multi-category search (tracks, playlists, artists)
+    - Responsive card/table layouts
+    - Interactive result items with hover effects
+    - Empty state handling
+    - Direct playback integration
+-->
+{% extends 'base.html.twig' %}
+
+{% block title %}Search - Onzeer{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+    /* Search Page Specific Styles */
+    
+    /* Interactive Result Items */
+    .search-result-item:hover {
+        background-color: rgba(255,255,255,0.1);
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    /* Category Section Headers */
+    .search-category h4 {
+        border-bottom: 2px solid #667eea;
+        padding-bottom: 8px;
+        margin-bottom: 20px;
+    }
+
+    /* Empty State Styling */
+    .empty-search {
+        text-align: center;
+        padding: 60px 20px;
+        color: #adb5bd;
+    }
+
+    .empty-search i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header Section -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-search me-2"></i>
+                    {% if query %}
+                        Search Results for "{{ query }}"
+                    {% else %}
+                        Search
+                    {% endif %}
+                </h2>
+            </div>
+
+            {% if query %}
+                {% if results.tracks|length == 0 and results.playlists|length == 0 and results.artists|length == 0 %}
+                    <div class="empty-search">
+                        <i class="fas fa-search"></i>
+                        <h4>No results found</h4>
+                        <p>We couldn't find anything matching "{{ query }}"</p>
+                        <p class="small">Try different keywords or check your spelling</p>
+                    </div>
+                {% else %}
+                    <div class="row">
+                        {% if results.tracks|length > 0 %}
+                            <div class="col-12 mb-4 search-category">
+                                <h4><i class="fas fa-music me-2"></i>Tracks ({{ results.tracks|length }})</h4>
+                                <div class="card">
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-dark table-hover mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th width="60">Cover</th>
+                                                        <th>Title</th>
+                                                        <th>Artist</th>
+                                                        <th>Album</th>
+                                                        <th>Genre</th>
+                                                        <th>Owner</th>
+                                                        <th width="100">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for track in results.tracks %}
+                                                        <tr class="search-result-item">
+                                                            <td>
+                                                                {% if track.coverImage %}
+                                                                    <img src="{{ asset('uploads/covers/' ~ track.coverImage) }}" 
+                                                                         alt="{{ track.title }} cover" 
+                                                                         class="rounded" 
+                                                                         style="width: 40px; height: 40px; object-fit: cover;">
+                                                                {% else %}
+                                                                    <div class="bg-gradient-primary rounded d-flex align-items-center justify-content-center" 
+                                                                         style="width: 40px; height: 40px; background: linear-gradient(45deg, #667eea, #764ba2);">
+                                                                        <i class="fas fa-music text-white"></i>
+                                                                    </div>
+                                                                {% endif %}
+                                                            </td>
+                                                            <td><strong>{{ track.title }}</strong></td>
+                                                            <td>{{ track.artist }}</td>
+                                                            <td>{{ track.album ?: '-' }}</td>
+                                                            <td>
+                                                                {% if track.genre %}
+                                                                    <span class="badge bg-secondary">{{ track.genre }}</span>
+                                                                {% else %}
+                                                                    -
+                                                                {% endif %}
+                                                            </td>
+                                                            <td><small class="text-muted">{{ track.owner }}</small></td>
+                                                            <td>
+                                                                <button class="btn btn-outline-success btn-sm" 
+                                                                        onclick="safePlayTrack('{{ track.audioFile }}', '{{ track.title|escape('js') }}', '{{ track.artist|escape('js') }}', '{{ track.coverImage }}')"
+                                                                        title="Play">
+                                                                    <i class="fas fa-play"></i>
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if results.playlists|length > 0 %}
+                            <div class="col-12 mb-4 search-category">
+                                <h4><i class="fas fa-list me-2"></i>Playlists ({{ results.playlists|length }})</h4>
+                                <div class="row">
+                                    {% for playlist in results.playlists %}
+                                        <div class="col-lg-3 col-md-4 col-sm-6 col-12 mb-3">
+                                            <div class="card h-100 search-result-item">
+                                                <div class="card-body">
+                                                    {% if playlist.coverImage %}
+                                                        <img src="{{ asset('uploads/covers/' ~ playlist.coverImage) }}" 
+                                                             alt="{{ playlist.name }}" 
+                                                             class="img-fluid rounded mb-3" 
+                                                             style="width: 100%; height: 120px; object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="d-flex align-items-center justify-content-center bg-gradient-primary rounded mb-3" 
+                                                             style="width: 100%; height: 120px; background: linear-gradient(45deg, #667eea, #764ba2);">
+                                                            <i class="fas fa-list fa-3x text-white"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <h6 class="card-title">{{ playlist.name }}</h6>
+                                                    <p class="card-text small text-muted">
+                                                        {{ playlist.description ?: 'No description' }}
+                                                    </p>
+                                                    <p class="card-text small">
+                                                        <i class="fas fa-music me-1"></i>{{ playlist.tracksCount }} tracks<br>
+                                                        <i class="fas fa-user me-1"></i>{{ playlist.owner }}
+                                                    </p>
+                                                    <button class="btn btn-outline-primary btn-sm w-100" 
+                                                            onclick="viewPublicPlaylist({{ playlist.id }})"
+                                                            title="View Playlist">
+                                                        <i class="fas fa-eye me-1"></i>View
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if results.artists|length > 0 %}
+                            <div class="col-12 mb-4 search-category">
+                                <h4><i class="fas fa-microphone me-2"></i>Artists ({{ results.artists|length }})</h4>
+                                <div class="row">
+                                    {% for artist in results.artists %}
+                                        <div class="col-lg-3 col-md-4 col-sm-6 col-12 mb-3">
+                                            <div class="card h-100 search-result-item">
+                                                <div class="card-body text-center">
+                                                    <div class="d-flex align-items-center justify-content-center bg-gradient-secondary rounded-circle mb-3 mx-auto" 
+                                                         style="width: 80px; height: 80px; background: linear-gradient(45deg, #f093fb, #f5576c);">
+                                                        <i class="fas fa-microphone fa-2x text-white"></i>
+                                                    </div>
+                                                    <h6 class="card-title">{{ artist.name }}</h6>
+                                                    <p class="card-text small text-muted">
+                                                        <i class="fas fa-music me-1"></i>{{ artist.tracksCount }} tracks
+                                                    </p>
+                                                    <button class="btn btn-outline-info btn-sm w-100" 
+                                                            onclick="searchArtist('{{ artist.name|escape('js') }}')"
+                                                            title="View All Tracks">
+                                                        <i class="fas fa-search me-1"></i>View Tracks
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="empty-search">
+                    <i class="fas fa-search"></i>
+                    <h4>Discover Music</h4>
+                    <p>Search for tracks, artists, albums, and playlists</p>
+                    <p class="small">Use the search bar above to start exploring</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * Search Page JavaScript Functions
+ * 
+ * Handles user interactions with search results:
+ * - Playlist viewing and navigation
+ * - Artist search functionality
+ */
+
+/* Navigate to playlist view */
+function viewPublicPlaylist(playlistId) {
+    window.location.href = '/?playlist=' + playlistId;
+}
+
+/* Search for tracks by specific artist */
+function searchArtist(artistName) {
+    window.location.href = '{{ path('app_search') }}?q=' + encodeURIComponent(artistName);
+}
+</script>
+{% endblock %}

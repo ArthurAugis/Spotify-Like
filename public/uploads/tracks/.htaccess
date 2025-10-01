@@ -1,0 +1,20 @@
+RewriteEngine On
+
+# Enable range requests for audio files
+<FilesMatch "\.(mp3|wav|ogg|m4a|aac)$">
+    # Essential headers for audio seeking
+    Header always set Accept-Ranges bytes
+    Header always set Cache-Control "public, max-age=3600"
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Headers "Range, Content-Range, Accept-Ranges"
+    
+    # Set proper content type
+    AddType audio/mpeg .mp3
+    AddType audio/wav .wav
+    AddType audio/ogg .ogg
+    AddType audio/mp4 .m4a
+    AddType audio/aac .aac
+</FilesMatch>
+
+# Prevent direct directory browsing
+Options -Indexes

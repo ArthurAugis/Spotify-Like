@@ -1,91 +1,163 @@
+<!--
+    Library Management Page
+    
+    Purpose: Manage user's music library with tracks and playlists
+    Features:
+    - Tab-based interface (Tracks/Playlists)
+    - Full CRUD operations for tracks and playlists
+    - Advanced search and filtering
+    - Modal-based forms for better UX
+    - Drag & drop support for playlist management
+-->
 {% extends 'base.html.twig' %}
 
 {% block title %}My Library - Onzeer{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    
+    <!-- Tab Flash Prevention Script: Ensures smooth tab switching from URL hash -->
+    <script>
+    (function() {
+        /* Prevent visual flash when loading page with #playlists hash */
+        if (window.location.hash === '#playlists') {
+            /* Inject CSS immediately to hide tracks tab during load */
+            document.head.insertAdjacentHTML('beforeend', 
+                '<style id="tab-flash-fix">' +
+                '#tracks.show.active, #tracks.active, #tracks.tab-pane.active { display: none !important; }' +
+                '#playlists.tab-pane { display: block !important; }' +
+                '#tracks-tab.active { background-color: var(--bs-nav-tabs-link-active-bg, #fff) !important; }' +
+                '#playlists-tab { background-color: var(--bs-nav-tabs-link-active-bg, #fff) !important; color: var(--bs-nav-tabs-link-active-color, #495057) !important; border-color: var(--bs-nav-tabs-link-active-border-color, #dee2e6 #dee2e6 #fff) !important; }' +
+                '</style>'
+            );
+        }
+    })();
+    </script>
+    
+    <style>
+    /* Library Page Interactive Styles */
+    
+    /* Playlist Card Hover Effects */
+    .playlist-card:hover {
+        background-color: #495057 !important;
+        cursor: pointer;
+    }
+
+    /* Track list item hover highlighting */
+    .track-item:hover {
+        background-color: rgba(255,255,255,0.1);
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    /* Album card base styling and smooth transitions */
+    .album-card {
+        transition: transform 0.3s ease;
+    }
+
+    .album-card:hover {
+        transform: scale(1.05);
+        cursor: pointer;
+    }
+
+    /* Action buttons with fade-in effect on hover */
+    .play-btn-hover {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        border-radius: 6px !important;
+    }
+
+    .album-card:hover .play-btn-hover {
+        opacity: 1;
+    }
+
+    /* Button sizing and positioning controls */
+    .play-btn-hover {
+        min-width: 32px !important;
+        min-height: 32px !important;
+    }
+
+    .play-btn-hover:hover {
+        transform: scale(1.05);
+    }
+    </style>
+{% endblock %}
+
 {% block body %}
-<div class="container-fluid text-white">
-    <!-- Header -->
+<div class="container-fluid mt-4">
     <div class="row">
-        <div class="col-12 py-4">
-            <h1 class="h3 mb-2">
-                <i class="fas fa-music me-2"></i>My Library
-            </h1>
-            <p class="text-muted mb-3">Manage your uploaded tracks and playlists</p>
-            
-            <!-- Quick Stats -->
-            <div class="row g-3 mb-4">
-                <div class="col-md-6 col-sm-6">
-                    <div class="card bg-primary">
-                        <div class="card-body text-center">
-                            <i class="fas fa-headphones fa-2x mb-2"></i>
-                            <h4 class="mb-0">{{ stats.total_tracks }}</h4>
-                            <small>Track{{ stats.total_tracks != 1 ? 's' : '' }}</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-sm-6">
-                    <div class="card bg-success">
-                        <div class="card-body text-center">
-                            <i class="fas fa-list fa-2x mb-2"></i>
-                            <h4 class="mb-0">{{ stats.total_playlists }}</h4>
-                            <small>Playlist{{ stats.total_playlists != 1 ? 's' : '' }}</small>
-                        </div>
-                    </div>
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-music me-2"></i>My Library</h2>
+                <div>
+                    {% if app.user %}
+                        <a href="{{ path('app_upload_track') }}" class="btn btn-success me-2">
+                            <i class="fas fa-plus me-2"></i>Upload Track
+                        </a>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPlaylistModal">
+                            <i class="fas fa-plus me-2"></i>Create Playlist
+                        </button>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="row">
-        <div class="col-12">
-            <ul class="nav nav-pills mb-4" id="libraryTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="tracks-tab" data-bs-toggle="pill" data-bs-target="#tracks" type="button" role="tab">
-                        <i class="fas fa-headphones me-2"></i>My Tracks ({{ tracks|length }})
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="playlists-tab" data-bs-toggle="pill" data-bs-target="#playlists" type="button" role="tab">
-                        <i class="fas fa-list me-2"></i>My Playlists ({{ playlists|length }})
-                    </button>
-                </li>
-            </ul>
-        </div>
-    </div>
+    {% set showPlaylistsTab = app.request.query.get('playlist') %}
+    <ul class="nav nav-tabs mb-4" id="libraryTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {{ showPlaylistsTab ? '' : 'active' }}" id="tracks-tab" data-bs-toggle="tab" data-bs-target="#tracks" 
+                    type="button" role="tab" aria-controls="tracks" aria-selected="{{ showPlaylistsTab ? 'false' : 'true' }}">
+                <i class="fas fa-music me-2"></i>My Tracks ({{ tracks|length }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {{ showPlaylistsTab ? 'active' : '' }}" id="playlists-tab" data-bs-toggle="tab" data-bs-target="#playlists" 
+                    type="button" role="tab" aria-controls="playlists" aria-selected="{{ showPlaylistsTab ? 'true' : 'false' }}">
+                <i class="fas fa-list me-2"></i>My Playlists ({{ playlists|length }})
+            </button>
+        </li>
+    </ul>
 
-    <!-- Tab Content -->
     <div class="tab-content" id="libraryTabsContent">
-        <!-- My Tracks Tab -->
-        <div class="tab-pane fade show active" id="tracks" role="tabpanel">
-            <div class="row">
-                <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4>My Uploaded Tracks</h4>
-                        <a href="{{ path('app_upload_track') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Upload New Track
-                        </a>
+        <div class="tab-pane fade {{ showPlaylistsTab ? '' : 'show active' }}" id="tracks" role="tabpanel" aria-labelledby="tracks-tab">
+            {% if tracks|length > 0 %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-music me-2"></i>Your Music Collection
+                        </h5>
                     </div>
-
-                    {% if tracks|length > 0 %}
+                    <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-dark table-hover">
+                            <table class="table table-dark table-hover mb-0">
                                 <thead>
                                     <tr>
                                         <th width="60">Cover</th>
                                         <th>Title</th>
                                         <th>Artist</th>
-                                        <th>Playlist</th>
+                                        <th>Album/Playlist</th>
                                         <th>Genre</th>
-                                        <th>Uploaded</th>
-                                        <th width="120">Actions</th>
+                                        <th>Date</th>
+                                        <th width="200">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for track in tracks %}
-                                        <tr id="track-{{ track.id }}">
+                                        <tr class="track-item">
                                             <td>
-                                                {{ track.getCoverHtml(50)|raw }}
+                                                {% if track.coverImage %}
+                                                    <img src="{{ asset('uploads/covers/' ~ track.coverImage) }}" 
+                                                         alt="{{ track.title }} cover" 
+                                                         class="rounded" 
+                                                         style="width: 40px; height: 40px; object-fit: cover;">
+                                                {% else %}
+                                                    <div class="bg-gradient-primary rounded d-flex align-items-center justify-content-center" 
+                                                         style="width: 40px; height: 40px; background: linear-gradient(45deg, #667eea, #764ba2);">
+                                                        <i class="fas fa-music text-white"></i>
+                                                    </div>
+                                                {% endif %}
                                             </td>
                                             <td>
                                                 <strong>{{ track.title }}</strong>
@@ -117,7 +189,7 @@
                                             <td>
                                                 <div class="btn-group btn-group-sm">
                                                     <button class="btn btn-outline-info" 
-                                                            onclick="playTrack('{{ track.audioFile }}', '{{ track.title }}', '{{ track.artist }}')"
+                                                            onclick="safePlayTrack('{{ track.audioFile }}', '{{ track.title|escape('js') }}', '{{ track.artist|escape('js') }}', '{{ track.coverImage }}')"
                                                             title="Play">
                                                         <i class="fas fa-play"></i>
                                                     </button>
@@ -132,7 +204,7 @@
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                     <button class="btn btn-outline-danger" 
-                                                            onclick="showDeleteTrackModal({{ track.id }}, '{{ track.title|escape('js') }}', '{{ track.artist|escape('js') }}')"
+                                                            onclick="deleteTrack({{ track.id }}, '{{ track.title|escape('js') }}')"
                                                             title="Delete">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
@@ -143,69 +215,76 @@
                                 </tbody>
                             </table>
                         </div>
-                    {% else %}
-                        <div class="text-center py-5">
-                            <i class="fas fa-music fa-3x text-muted mb-3"></i>
-                            <h5>No tracks uploaded yet</h5>
-                            <p class="text-muted">Start building your music library by uploading your first track!</p>
-                            <a href="{{ path('app_upload_track') }}" class="btn btn-primary">
-                                <i class="fas fa-cloud-upload-alt me-2"></i>Upload Your First Track
-                            </a>
-                        </div>
-                    {% endif %}
+                    </div>
                 </div>
-            </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-compact-disc fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No tracks uploaded yet</h4>
+                    <p class="text-muted mb-4">Start building your music library!</p>
+                    <a href="{{ path('app_upload_track') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Upload Your First Track
+                    </a>
+                </div>
+            {% endif %}
         </div>
 
-        <!-- My Playlists Tab -->
-        <div class="tab-pane fade" id="playlists" role="tabpanel">
-            <div class="row">
-                <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4>My Playlists</h4>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPlaylistModal">
-                            <i class="fas fa-plus me-2"></i>Create New Playlist
+        <div class="tab-pane fade {{ showPlaylistsTab ? 'show active' : '' }}" id="playlists" role="tabpanel" aria-labelledby="playlists-tab">
+            {% if playlists|length > 0 %}
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>Your Playlists
+                        </h5>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createPlaylistModal">
+                            <i class="fas fa-plus me-2"></i>Create Playlist
                         </button>
                     </div>
-
-                    {% if playlists|length > 0 %}
+                    <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-dark table-hover">
+                            <table class="table table-dark table-hover mb-0">
                                 <thead>
                                     <tr>
-                                        <th width="50">Cover</th>
+                                        <th width="60">Icon</th>
                                         <th>Name</th>
                                         <th>Description</th>
                                         <th>Tracks</th>
-                                        <th>Status</th>
+                                        <th>Privacy</th>
                                         <th>Created</th>
-                                        <th width="150">Actions</th>
+                                        <th width="250">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for playlist in playlists %}
-                                        <tr id="playlist-{{ playlist.id }}">
+                                        <tr class="playlist-item" id="playlist-row-{{ playlist.id }}">
                                             <td>
-                                                {{ playlist.getCoverHtml(50)|raw }}
+                                                {% if playlist.coverImage %}
+                                                    <img src="{{ asset('uploads/covers/' ~ playlist.coverImage) }}" 
+                                                         alt="{{ playlist.name }} cover" 
+                                                         class="rounded" 
+                                                         style="width: 40px; height: 40px; object-fit: cover;">
+                                                {% else %}
+                                                    <div class="bg-gradient-primary rounded d-flex align-items-center justify-content-center" 
+                                                         style="width: 40px; height: 40px; background: linear-gradient(45deg, #667eea, #764ba2);">
+                                                        <i class="fas fa-list text-white"></i>
+                                                    </div>
+                                                {% endif %}
                                             </td>
                                             <td>
                                                 <strong>{{ playlist.name }}</strong>
                                             </td>
                                             <td>
-                                                {% if playlist.description %}
-                                                    <span class="text-muted small">{{ playlist.description|slice(0, 50) }}{% if playlist.description|length > 50 %}...{% endif %}</span>
+                                                <span class="text-muted">{{ playlist.description ?: 'No description' }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">{{ playlist.tracks|length }} tracks</span>
+                                            </td>
+                                            <td>
+                                                {% if playlist.isPublic %}
+                                                    <span class="badge bg-success">Public</span>
                                                 {% else %}
-                                                    <span class="text-muted">-</span>
+                                                    <span class="badge bg-secondary">Private</span>
                                                 {% endif %}
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-info">{{ playlist.tracks|length }} track{{ playlist.tracks|length != 1 ? 's' : '' }}</span>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-{{ playlist.isPublic ? 'success' : 'secondary' }}">
-                                                    <i class="fas fa-{{ playlist.isPublic ? 'unlock' : 'lock' }} me-1"></i>
-                                                    {{ playlist.isPublic ? 'Public' : 'Private' }}
-                                                </span>
                                             </td>
                                             <td>
                                                 <small class="text-muted">
@@ -216,27 +295,34 @@
                                                 <div class="btn-group btn-group-sm">
                                                     <button class="btn btn-outline-info" 
                                                             onclick="viewPlaylist({{ playlist.id }})"
-                                                            title="View">
+                                                            title="View Playlist">
                                                         <i class="fas fa-eye"></i>
                                                     </button>
-                                                    <button class="btn btn-outline-success" 
-                                                            onclick="showAddTracksToPlaylistModal({{ playlist.id }}, '{{ playlist.name|escape('js') }}')"
-                                                            title="Add Tracks">
-                                                        <i class="fas fa-music"></i>
+                                                    {% if playlist.tracks|length > 0 %}
+                                                        <button class="btn btn-outline-success" 
+                                                                onclick="playAllFromPlaylist({{ playlist.id }}, '{{ playlist.name|escape('js') }}')"
+                                                                title="Play All">
+                                                            <i class="fas fa-play"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                    <button class="btn btn-outline-primary" 
+                                                            onclick="showAddTrackToPlaylistModal({{ playlist.id }}, '{{ playlist.name|escape('js') }}')"
+                                                            title="Add Track">
+                                                        <i class="fas fa-plus"></i>
                                                     </button>
                                                     <button class="btn btn-outline-warning" 
                                                             onclick="editPlaylist({{ playlist.id }}, '{{ playlist.name|escape('js') }}', '{{ playlist.description|escape('js') }}', {{ playlist.isPublic ? 'true' : 'false' }})"
-                                                            title="Edit">
+                                                            title="Edit Playlist">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
-                                                    <button class="btn btn-outline-primary" 
+                                                    <button class="btn btn-outline-secondary" 
                                                             onclick="togglePlaylistPrivacy({{ playlist.id }})"
                                                             title="Toggle Privacy">
                                                         <i class="fas fa-{{ playlist.isPublic ? 'lock' : 'unlock' }}"></i>
                                                     </button>
                                                     <button class="btn btn-outline-danger" 
-                                                            onclick="deletePlaylist({{ playlist.id }})"
-                                                            title="Delete">
+                                                            onclick="deletePlaylist({{ playlist.id }}, '{{ playlist.name|escape('js') }}')"
+                                                            title="Delete Playlist">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </div>
@@ -246,39 +332,44 @@
                                 </tbody>
                             </table>
                         </div>
-                    {% else %}
-                        <div class="text-center py-5">
-                            <i class="fas fa-list fa-3x text-muted mb-3"></i>
-                            <h5>No playlists created yet</h5>
-                            <p class="text-muted">Organize your music by creating your first playlist!</p>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPlaylistModal">
-                                <i class="fas fa-plus me-2"></i>Create Your First Playlist
-                            </button>
-                        </div>
-                    {% endif %}
+                    </div>
                 </div>
-            </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-list fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No playlists created yet</h4>
+                    <p class="text-muted mb-4">Create your first playlist to organize your music!</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPlaylistModal">
+                        <i class="fas fa-plus me-2"></i>Create Your First Playlist
+                    </button>
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Create Playlist Modal -->
-<div class="modal fade" id="createPlaylistModal" tabindex="-1">
+<div class="modal fade" id="createPlaylistModal" tabindex="-1" aria-labelledby="createPlaylistModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content bg-dark">
             <div class="modal-header">
-                <h5 class="modal-title">Create New Playlist</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="createPlaylistModalLabel">Create New Playlist</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="createPlaylistForm">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="playlistName" class="form-label">Playlist Name *</label>
-                        <input type="text" class="form-control" id="playlistName" name="name" required>
+                        <label for="playlistName" class="form-label">Playlist Name</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="playlistName" name="name" required>
                     </div>
                     <div class="mb-3">
-                        <label for="playlistDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="playlistDescription" name="description" rows="3"></textarea>
+                        <label for="playlistDescription" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control bg-dark text-white border-secondary" id="playlistDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="playlistIsPublic" name="is_public">
+                        <label class="form-check-label" for="playlistIsPublic">
+                            Make this playlist public
+                        </label>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -290,492 +381,805 @@
     </div>
 </div>
 
-<!-- Edit Playlist Modal -->
-<div class="modal fade" id="editPlaylistModal" tabindex="-1">
+<div class="modal fade" id="editPlaylistModal" tabindex="-1" aria-labelledby="editPlaylistModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content bg-dark">
             <div class="modal-header">
-                <h5 class="modal-title">Edit Playlist</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="editPlaylistModalLabel">Edit Playlist</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="editPlaylistForm">
-                <input type="hidden" id="editPlaylistId" name="playlist_id">
+                <input type="hidden" id="editPlaylistId" name="id">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="editPlaylistName" class="form-label">Playlist Name *</label>
-                        <input type="text" class="form-control" id="editPlaylistName" name="name" required>
+                        <label for="editPlaylistName" class="form-label">Playlist Name</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="editPlaylistName" name="name" required>
                     </div>
                     <div class="mb-3">
-                        <label for="editPlaylistDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="editPlaylistDescription" name="description" rows="3"></textarea>
+                        <label for="editPlaylistDescription" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control bg-dark text-white border-secondary" id="editPlaylistDescription" name="description" rows="3"></textarea>
                     </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="editPlaylistPublic" name="is_public">
-                            <label class="form-check-label" for="editPlaylistPublic">
-                                Make this playlist public
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <hr class="my-4">
-                    <h6 class="text-muted mb-3">Update Cover Image (Optional)</h6>
-                    
-                    <div class="mb-3">
-                        <label for="editPlaylistCoverFile" class="form-label">New Cover Image</label>
-                        <input type="file" class="form-control" id="editPlaylistCoverFile" name="cover_file" accept="image/*">
-                        <div class="form-text">Leave empty to keep current cover image</div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="editPlaylistIsPublic" name="is_public">
+                        <label class="form-check-label" for="editPlaylistIsPublic">
+                            Make this playlist public
+                        </label>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="submit" class="btn btn-warning">Update Playlist</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- View Playlist Modal -->
-<div class="modal fade" id="viewPlaylistModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content bg-dark">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-list me-2"></i>
-                    <span id="viewPlaylistName">Playlist Details</span>
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Playlist Info -->
-                <div class="row mb-4">
-                    <div class="col-md-8">
-                        <h6 class="text-muted">Description</h6>
-                        <p id="viewPlaylistDescription" class="mb-3">-</p>
-                        
-                        <div class="row">
-                            <div class="col-md-4">
-                                <h6 class="text-muted">Tracks</h6>
-                                <p id="viewPlaylistTracksCount">0</p>
-                            </div>
-                            <div class="col-md-4">
-                                <h6 class="text-muted">Duration</h6>
-                                <p id="viewPlaylistDuration">0:00</p>
-                            </div>
-                            <div class="col-md-4">
-                                <h6 class="text-muted">Status</h6>
-                                <p id="viewPlaylistStatus">-</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <h6 class="text-muted">Created</h6>
-                        <p id="viewPlaylistCreated">-</p>
-                    </div>
-                </div>
-
-                <!-- Tracks List -->
-                <h6 class="text-muted mb-3">Tracks in this playlist</h6>
-                <div id="playlistTracksContainer">
-                    <div class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Track Modal -->
-<div class="modal fade" id="editTrackModal" tabindex="-1">
+<div class="modal fade" id="addTrackToPlaylistModal" tabindex="-1" aria-labelledby="addTrackToPlaylistModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content bg-dark">
             <div class="modal-header">
-                <h5 class="modal-title">Edit Track</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="addTrackToPlaylistModalLabel">Add Track to Playlist</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editTrackForm">
-                <input type="hidden" id="editTrackId" name="track_id">
+            <form id="addTrackToPlaylistForm">
+                <input type="hidden" id="targetPlaylistId" name="playlistId">
                 <div class="modal-body">
+                    <p>Select a track to add to <strong id="targetPlaylistName"></strong>:</p>
                     <div class="mb-3">
-                        <label for="editTrackTitle" class="form-label">Title *</label>
-                        <input type="text" class="form-control" id="editTrackTitle" name="title" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editTrackArtist" class="form-label">Artist *</label>
-                        <input type="text" class="form-control" id="editTrackArtist" name="artist" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editTrackAlbum" class="form-label">Playlist</label>
-                        <select class="form-control" id="editTrackAlbum" name="album">
-                            <option value="">No playlist</option>
-                            {% for playlist in playlists %}
-                                <option value="{{ playlist.name }}">{{ playlist.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editTrackGenre" class="form-label">Genre</label>
-                        <select class="form-control" id="editTrackGenre" name="genre">
-                            <option value="">Select a genre</option>
-                            <option value="Pop">Pop</option>
-                            <option value="Rock">Rock</option>
-                            <option value="Hip-Hop">Hip-Hop</option>
-                            <option value="Electronic">Electronic</option>
-                            <option value="Jazz">Jazz</option>
-                            <option value="Classical">Classical</option>
-                            <option value="Country">Country</option>
-                            <option value="R&B">R&B</option>
-                            <option value="Reggae">Reggae</option>
-                            <option value="Folk">Folk</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editTrackDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="editTrackDescription" name="description" rows="3"></textarea>
-                    </div>
-                    
-                    <hr class="my-4">
-                    <h6 class="text-muted mb-3">Update Files (Optional)</h6>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="editTrackAudioFile" class="form-label">New Audio File</label>
-                                <input type="file" class="form-control" id="editTrackAudioFile" name="audio_file" accept="audio/*">
-                                <div class="form-text">Leave empty to keep current audio file</div>
-                            </div>
+                        <label for="searchTrackInput" class="form-label">Search Tracks</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" 
+                               id="searchTrackInput" 
+                               placeholder="Type to search for a track..." 
+                               autocomplete="off">
+                        <div id="searchResults" class="list-group mt-2" style="max-height: 300px; overflow-y: auto; display: none;">
+                            <!-- Search results will appear here -->
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="editTrackCoverFile" class="form-label">New Cover Image</label>
-                                <input type="file" class="form-control" id="editTrackCoverFile" name="cover_file" accept="image/*">
-                                <div class="form-text">Leave empty to keep current cover</div>
-                            </div>
-                        </div>
+                        <input type="hidden" id="selectedTrackId" name="trackId">
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="submit" class="btn btn-success">Add Track</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Delete Track Modal -->
-<div class="modal fade" id="deleteTrackModal" tabindex="-1">
+<div class="modal fade" id="deletePlaylistModal" tabindex="-1" aria-labelledby="deletePlaylistModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content bg-dark">
             <div class="modal-header">
-                <h5 class="modal-title">Delete Track</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="deletePlaylistModalLabel">Delete Playlist</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="text-center">
-                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
-                    <h5>Are you sure?</h5>
-                    <p class="text-muted">You are about to delete:</p>
-                    <p><strong id="deleteTrackInfo"></strong></p>
-                    <div class="alert alert-warning" style="color: black !important;">
-                        <i class="fas fa-warning me-2"></i>
-                        This action cannot be undone. The track file will be permanently deleted.
-                    </div>
-                </div>
+                <p>Are you sure you want to delete the playlist <strong id="deletePlaylistName"></strong>?</p>
+                <p class="text-warning">This action cannot be undone.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteTrack">
-                    <i class="fas fa-trash me-2"></i>Delete Track
-                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeletePlaylist">Delete</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Add Track to Playlist Modal -->
-<div class="modal fade" id="addToPlaylistModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content bg-dark text-white">
+<div class="modal fade" id="viewPlaylistModal" tabindex="-1" aria-labelledby="viewPlaylistModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
             <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-plus me-2"></i>Add to Playlist
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="viewPlaylistModalLabel">Playlist Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="addToPlaylistTrackInfo" class="mb-3 p-3 bg-secondary rounded">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <div id="viewPlaylistCover" class="mb-3">
+                            <!-- Cover image will be inserted here -->
+                        </div>
+                        <button class="btn btn-success w-100" id="playAllPlaylistBtn" style="display: none;">
+                            <i class="fas fa-play me-2"></i>Play All
+                        </button>
+                    </div>
+                    <div class="col-md-8">
+                        <h3 id="viewPlaylistName">Loading...</h3>
+                        <p id="viewPlaylistDescription" class="text-muted">-</p>
+                        <div class="text-muted small mb-3">
+                            <i class="fas fa-music me-1"></i><span id="viewPlaylistTracksCount">0</span> tracks •
+                            <i class="fas fa-clock me-1"></i><span id="viewPlaylistDuration">0:00</span> •
+                            <span id="viewPlaylistStatus">-</span> •
+                            Created <span id="viewPlaylistCreated">-</span>
+                        </div>
+                    </div>
                 </div>
-                <div id="addToPlaylistList">
-                    <div class="text-center">
+                
+                <hr>
+                
+                <h5>Tracks</h5>
+                <div id="viewPlaylistTracks">
+                    <div class="text-center py-3">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
         </div>
     </div>
 </div>
 
-<!-- Add Tracks to Playlist Modal -->
-<div class="modal fade" id="addTracksToPlaylistModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content bg-dark text-white">
+<div class="modal fade" id="addToPlaylistModal" tabindex="-1" aria-labelledby="addToPlaylistModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
             <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-music me-2"></i>Add Tracks to <span id="targetPlaylistName"></span>
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="addToPlaylistModalLabel">Add Track to Playlist</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addToPlaylistForm">
+                <input type="hidden" id="trackIdToAdd" name="trackId">
+                <div class="modal-body">
+                    <p>Add "<strong id="trackTitleToAdd"></strong>" by <strong id="trackArtistToAdd"></strong> to:</p>
+                    <div class="mb-3">
+                        <label for="selectPlaylistForTrack" class="form-label">Select Playlist</label>
+                        <select class="form-select bg-dark text-white border-secondary" id="selectPlaylistForTrack" name="playlistId" required>
+                            <option value="">Select a playlist...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Add to Playlist</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editTrackModal" tabindex="-1" aria-labelledby="editTrackModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTrackModalLabel">Edit Track</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editTrackForm">
+                <input type="hidden" id="editTrackId" name="id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editTrackTitle" class="form-label">Title</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="editTrackTitle" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTrackArtist" class="form-label">Artist</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="editTrackArtist" name="artist" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTrackAlbum" class="form-label">Album (Optional)</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="editTrackAlbum" name="album">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTrackGenre" class="form-label">Genre (Optional)</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="editTrackGenre" name="genre">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTrackDescription" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control bg-dark text-white border-secondary" id="editTrackDescription" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Update Track</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteTrackModal" tabindex="-1" aria-labelledby="deleteTrackModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteTrackModalLabel">Delete Track</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
-                    <div class="input-group">
-                        <input type="text" id="trackSearchInput" class="form-control bg-secondary border-secondary text-white" 
-                               placeholder="Search tracks by title, artist, or album...">
-                        <button class="btn btn-primary" onclick="searchTracksForPlaylist()">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div id="trackSearchResults">
-                    <div class="text-center text-muted">
-                        <i class="fas fa-search fa-3x mb-3"></i>
-                        <p>Search for tracks to add to this playlist</p>
-                    </div>
-                </div>
+                <p>Are you sure you want to delete the track <strong id="deleteTrackTitle"></strong>?</p>
+                <p class="text-warning">This action cannot be undone and will remove the track from all playlists.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteTrack">Delete</button>
             </div>
         </div>
     </div>
 </div>
 
+<div class="modal fade" id="removeTrackFromPlaylistModal" tabindex="-1" aria-labelledby="removeTrackFromPlaylistModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="removeTrackFromPlaylistModalLabel">Remove Track from Playlist</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove <strong id="removeTrackTitle"></strong> from the playlist <strong id="removeFromPlaylistName"></strong>?</p>
+                <p class="text-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    This will only remove the track from this playlist. The track will remain in your library and other playlists.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmRemoveTrackFromPlaylist">Remove from Playlist</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
 <script>
-// Function to activate playlists tab
+/**
+ * Library Management JavaScript
+ * 
+ * This script handles all client-side functionality for the library page:
+ * - AJAX routes configuration
+ * - Playlist and track management functions
+ * - Modal interactions and form submissions
+ * - Search and filtering capabilities
+ */
+
+/* AJAX Route Configuration */
+window.libraryViewPlaylistRoute = '{{ path('app_library_view_playlist', {'id': '__ID__'}) }}';
+window.createPlaylistRoute = '{{ path('app_library_create_playlist') }}';
+window.editPlaylistRoute = '{{ path('app_library_edit_playlist', {'id': '__ID__'}) }}';
+window.deletePlaylistRoute = '{{ path('app_library_delete_playlist', {'id': '__ID__'}) }}';
+window.togglePlaylistPrivacyRoute = '{{ path('app_library_toggle_playlist_privacy', {'id': '__ID__'}) }}';
+window.addTrackToPlaylistRoute = '{{ path('app_library_add_track_to_playlist') }}';
+window.editTrackRoute = '{{ path('app_library_edit_track', {'id': '__ID__'}) }}';
+window.deleteTrackRoute = '{{ path('app_library_delete_track', {'id': '__ID__'}) }}';
+window.playlistsForTrackRoute = '{{ path('app_library_playlists_for_track', {'trackId': '__TRACK_ID__'}) }}';
+window.removeTrackFromPlaylistRoute = '{{ path('app_library_remove_track_from_playlist') }}';
+
+/**
+ * Tab Management Functions
+ */
 function activatePlaylistsTab() {
-    // Use Bootstrap tab API
     const playlistsTabButton = document.getElementById('playlists-tab');
     const tracksTabButton = document.getElementById('tracks-tab');
     
-    // Remove active class from tracks tab
-    tracksTabButton.classList.remove('active');
-    tracksTabButton.setAttribute('aria-selected', 'false');
-    
-    // Add active class to playlists tab
-    playlistsTabButton.classList.add('active');
-    playlistsTabButton.setAttribute('aria-selected', 'true');
-    
-    // Show/hide tab content
-    const tracksTab = document.getElementById('tracks');
-    const playlistsTab = document.getElementById('playlists');
-    
-    tracksTab.classList.remove('show', 'active');
-    playlistsTab.classList.add('show', 'active');
-    
-    // Update URL hash
-    window.location.hash = 'playlists';
-}
-
-// Function to check and restore active tab immediately
-function checkActiveTab() {
-    const hash = window.location.hash.substring(1);
-    if (hash === 'playlists') {
-        activatePlaylistsTab();
+    if (playlistsTabButton && tracksTabButton) {
+        tracksTabButton.classList.remove('active');
+        playlistsTabButton.classList.add('active');
+        
+        document.getElementById('tracks').classList.remove('show', 'active');
+        document.getElementById('playlists').classList.add('show', 'active');
     }
 }
 
-// Check immediately on page load (before DOMContentLoaded)
-checkActiveTab();
-
-// Create new playlist
-document.getElementById('createPlaylistForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    
-    fetch('{{ path('app_library_create_playlist') }}', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.href = window.location.pathname + '#playlists';
-            window.location.reload();
-        } else {
-            alert('Error: ' + data.error);
-        }
-    })
-    .catch(error => {
-        alert('An error occurred while creating the playlist');
-        console.error('Error:', error);
-    });
-});
-
-// View playlist details
-function viewPlaylist(playlistId) {
-    // Show modal immediately
+function viewPlaylist(id) {
     const modal = new bootstrap.Modal(document.getElementById('viewPlaylistModal'));
     modal.show();
     
-    // Reset content
     document.getElementById('viewPlaylistName').textContent = 'Loading...';
     document.getElementById('viewPlaylistDescription').textContent = '-';
     document.getElementById('viewPlaylistTracksCount').textContent = '0';
     document.getElementById('viewPlaylistDuration').textContent = '0:00';
     document.getElementById('viewPlaylistStatus').textContent = '-';
     document.getElementById('viewPlaylistCreated').textContent = '-';
+    document.getElementById('playAllPlaylistBtn').style.display = 'none';
+    document.getElementById('viewPlaylistCover').innerHTML = '<div class="bg-secondary rounded d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px;"><div class="spinner-border text-light" role="status"></div></div>';
+    document.getElementById('viewPlaylistTracks').innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
     
-    // Show loading spinner
-    document.getElementById('playlistTracksContainer').innerHTML = `
-        <div class="text-center py-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
-    `;
+    const url = window.libraryViewPlaylistRoute.replace('__ID__', id);
     
-    // Fetch playlist data
-    fetch(`{{ path('app_library_view_playlist', {'id': '__ID__'}) }}`.replace('__ID__', playlistId))
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const playlist = data.playlist;
-                
-                // Update playlist info
-                document.getElementById('viewPlaylistName').textContent = playlist.name;
-                document.getElementById('viewPlaylistDescription').textContent = playlist.description || 'No description';
-                document.getElementById('viewPlaylistTracksCount').textContent = playlist.tracksCount;
-                document.getElementById('viewPlaylistDuration').textContent = playlist.totalDuration;
-                document.getElementById('viewPlaylistStatus').innerHTML = `
-                    <span class="badge bg-${playlist.isPublic ? 'success' : 'secondary'}">
-                        <i class="fas fa-${playlist.isPublic ? 'unlock' : 'lock'} me-1"></i>
-                        ${playlist.isPublic ? 'Public' : 'Private'}
-                    </span>
-                `;
-                document.getElementById('viewPlaylistCreated').textContent = playlist.createdAt;
-                
-                // Update tracks list
-                if (playlist.tracks.length > 0) {
-                    let tracksHtml = `
-                        <div class="table-responsive">
-                            <table class="table table-dark table-sm">
-                                <thead>
-                                    <tr>
-                                        <th width="50">Cover</th>
-                                        <th>Title</th>
-                                        <th>Artist</th>
-                                        <th>Genre</th>
-                                        <th>Duration</th>
-                                        <th width="100">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                    `;
-                    
-                    playlist.tracks.forEach(track => {
-                        tracksHtml += `
-                            <tr>
-                                <td>
-                                    ${track.coverImage ? 
-                                        `<img src="/uploads/covers/${track.coverImage}" alt="Cover" class="rounded" width="40" height="40">` :
-                                        `<div class="bg-gradient-primary rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: linear-gradient(45deg, #667eea, #764ba2);">
-                                            <i class="fas fa-music text-white"></i>
-                                        </div>`
-                                    }
-                                </td>
-                                <td><strong>${track.title}</strong></td>
-                                <td>${track.artist}</td>
-                                <td>${track.genre ? `<span class="badge bg-secondary">${track.genre}</span>` : '-'}</td>
-                                <td>${track.duration}</td>
-                                <td>
-                                    <button class="btn btn-outline-info btn-sm" 
-                                            onclick="playTrack('${track.audioFile}', '${track.title}', '${track.artist}')"
-                                            title="Play">
-                                        <i class="fas fa-play"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    
-                    tracksHtml += `
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-                    
-                    document.getElementById('playlistTracksContainer').innerHTML = tracksHtml;
-                } else {
-                    document.getElementById('playlistTracksContainer').innerHTML = `
-                        <div class="text-center py-4">
-                            <i class="fas fa-music fa-3x text-muted mb-3"></i>
-                            <h6 class="text-muted">No tracks in this playlist</h6>
-                            <p class="text-muted small">Add some tracks to see them here!</p>
-                        </div>
-                    `;
-                }
-            } else {
-                alert('Error: ' + data.error);
-            }
-        })
-        .catch(error => {
-            alert('An error occurred while loading playlist details');
-            console.error('Error:', error);
-        });
-}
-
-// Edit playlist
-function editPlaylist(id, name, description, isPublic) {
-    document.getElementById('editPlaylistId').value = id;
-    document.getElementById('editPlaylistName').value = name;
-    document.getElementById('editPlaylistDescription').value = description;
-    document.getElementById('editPlaylistPublic').checked = isPublic;
-    
-    new bootstrap.Modal(document.getElementById('editPlaylistModal')).show();
-}
-
-document.getElementById('editPlaylistForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const playlistId = formData.get('playlist_id');
-    
-    fetch(`{{ path('app_library_edit_playlist', {'id': '__ID__'}) }}`.replace('__ID__', playlistId), {
-        method: 'POST',
-        body: formData
+    fetch(url, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            window.location.href = window.location.pathname + '#playlists';
-            window.location.reload();
+            const playlist = data.playlist;
+            
+            document.getElementById('viewPlaylistName').textContent = playlist.name;
+            document.getElementById('viewPlaylistDescription').textContent = playlist.description || 'No description';
+            document.getElementById('viewPlaylistTracksCount').textContent = playlist.tracksCount;
+            document.getElementById('viewPlaylistDuration').textContent = playlist.totalDuration;
+            document.getElementById('viewPlaylistStatus').textContent = playlist.isPublic ? 'Public' : 'Private';
+            document.getElementById('viewPlaylistCreated').textContent = playlist.createdAt;
+            
+            const coverContainer = document.getElementById('viewPlaylistCover');
+            if (playlist.coverImage) {
+                coverContainer.innerHTML = `<img src="{{ asset('uploads/covers/') }}${playlist.coverImage}" alt="${playlist.name} cover" class="img-fluid rounded" style="max-width: 200px; max-height: 200px; object-fit: cover;">`;
+            } else {
+                coverContainer.innerHTML = `<div class="bg-gradient-primary rounded d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px;"><i class="fas fa-list text-white fa-3x"></i></div>`;
+            }
+            
+            if (playlist.tracks.length > 0) {
+                const playAllBtn = document.getElementById('playAllPlaylistBtn');
+                playAllBtn.style.display = 'block';
+                playAllBtn.onclick = () => {
+                    playAllFromPlaylist(id, playlist.name);
+                    modal.hide();
+                };
+            }
+            
+            const tracksContainer = document.getElementById('viewPlaylistTracks');
+            if (playlist.tracks.length > 0) {
+                let tracksHtml = '<div class="table-responsive"><table class="table table-dark table-hover"><thead><tr><th width="40">#</th><th width="50">Cover</th><th>Track</th><th width="100">Duration</th><th width="120">Actions</th></tr></thead><tbody>';
+                const playlistName = playlist.name.replace(/'/g, "\\'").replace(/"/g, '\\"');
+                
+                playlist.tracks.forEach((track, index) => {
+                    // Escape values safely
+                    const trackTitle = track.title.replace(/'/g, "\\'").replace(/"/g, '\\"');
+                    const trackArtist = track.artist.replace(/'/g, "\\'").replace(/"/g, '\\"');
+                    const trackAudioFile = track.audioFile || '';
+                    const trackCoverImage = track.coverImage || '';
+                    
+                    tracksHtml += `
+                        <tr>
+                            <td width="40">${index + 1}</td>
+                            <td width="50">
+                                ${track.coverImage ? 
+                                    `<img src="{{ asset('uploads/covers/') }}${track.coverImage}" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">` : 
+                                    `<div class="bg-gradient-primary rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;"><i class="fas fa-music text-white" style="font-size: 12px;"></i></div>`
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <strong>${track.title}</strong>
+                                    <small class="text-muted">${track.artist}</small>
+                                </div>
+                            </td>
+                            <td width="100">${track.duration}</td>
+                            <td width="120">
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-success" 
+                                            onclick="safePlayTrack('${trackAudioFile}', '${trackTitle}', '${trackArtist}', '${trackCoverImage}')"
+                                            title="Play">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger" 
+                                            onclick="removeTrackFromPlaylist(${playlist.id}, ${track.id}, '${trackTitle}', '${playlistName}')"
+                                            title="Remove from playlist">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tracksHtml += '</tbody></table></div>';
+                tracksContainer.innerHTML = tracksHtml;
+            } else {
+                tracksContainer.innerHTML = '<div class="text-center py-3 text-muted">No tracks in this playlist</div>';
+            }
         } else {
-            alert('Error: ' + data.error);
+            showNotification('Error loading playlist: ' + (data.error || 'Unknown error'), 'error');
         }
     })
     .catch(error => {
-        alert('An error occurred while updating the playlist');
+        console.error('Error loading playlist:', error);
+        showNotification('Error loading playlist', 'error');
+    });
+}
+
+function editPlaylist(id, name, description, isPublic) {
+    document.getElementById('editPlaylistId').value = id;
+    document.getElementById('editPlaylistName').value = name;
+    document.getElementById('editPlaylistDescription').value = description || '';
+    document.getElementById('editPlaylistIsPublic').checked = isPublic;
+    
+    const modal = new bootstrap.Modal(document.getElementById('editPlaylistModal'));
+    modal.show();
+}
+
+function deletePlaylist(id, name) {
+    document.getElementById('deletePlaylistName').textContent = name;
+    
+    const confirmBtn = document.getElementById('confirmDeletePlaylist');
+    confirmBtn.onclick = function() {
+        performDeletePlaylist(id);
+    };
+    
+    const modal = new bootstrap.Modal(document.getElementById('deletePlaylistModal'));
+    modal.show();
+}
+
+function performDeletePlaylist(id) {
+    const url = window.deletePlaylistRoute.replace('__ID__', id);
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const row = document.getElementById('playlist-row-' + id);
+            if (row) {
+                row.remove();
+            }
+            
+            bootstrap.Modal.getInstance(document.getElementById('deletePlaylistModal')).hide();
+            
+            showNotification('Playlist deleted successfully!', 'success');
+            
+            setTimeout(() => {
+                window.location.href = window.location.pathname + '#playlists';
+                location.reload();
+            }, 1000);
+        } else {
+            showNotification('Error deleting playlist: ' + (data.error || data.message), 'error');
+        }
+    })
+    .catch(error => {
         console.error('Error:', error);
+        showNotification('An error occurred while deleting the playlist.', 'error');
+    });
+}
+
+function togglePlaylistPrivacy(id) {
+    const url = window.togglePlaylistPrivacyRoute.replace('__ID__', id);
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Playlist privacy updated!', 'success');
+            setTimeout(() => {
+                window.location.href = window.location.pathname + '#playlists';
+                location.reload();
+            }, 1000);
+        } else {
+            showNotification('Error updating privacy: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while updating privacy.', 'error');
+    });
+}
+
+// Show add track to playlist modal
+function showAddTrackToPlaylistModal(playlistId, playlistName) {
+    // Safely set values with null checks
+    const targetPlaylistId = document.getElementById('targetPlaylistId');
+    const targetPlaylistName = document.getElementById('targetPlaylistName');
+    const searchTrackInput = document.getElementById('searchTrackInput');
+    const selectedTrackId = document.getElementById('selectedTrackId');
+    const searchResults = document.getElementById('searchResults');
+    const selectedTrackInfo = document.getElementById('selectedTrackInfo');
+    
+    if (targetPlaylistId) targetPlaylistId.value = playlistId;
+    if (targetPlaylistName) targetPlaylistName.textContent = playlistName;
+    
+    // Reset search with null checks
+    if (searchTrackInput) searchTrackInput.value = '';
+    if (selectedTrackId) selectedTrackId.value = '';
+    if (searchResults) searchResults.style.display = 'none';
+    if (selectedTrackInfo) selectedTrackInfo.style.display = 'none';
+    
+    const modalElement = document.getElementById('addTrackToPlaylistModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    } else {
+        console.error('Add track to playlist modal not found');
+    }
+}
+
+// Search tracks function
+function searchTracks(query) {
+    if (query.length < 2) {
+        document.getElementById('searchResults').style.display = 'none';
+        return;
+    }
+    
+    const playlistId = document.getElementById('targetPlaylistId').value;
+    
+    fetch(`{{ path('app_library_search_tracks') }}?q=${encodeURIComponent(query)}&playlist_id=${playlistId}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const resultsContainer = document.getElementById('searchResults');
+        resultsContainer.innerHTML = '';
+        
+        if (data.tracks && data.tracks.length > 0) {
+            data.tracks.forEach(track => {
+                // Skip tracks already in the playlist
+                if (track.inPlaylist) return;
+                
+                const item = document.createElement('a');
+                item.className = 'list-group-item list-group-item-action bg-dark text-white border-secondary';
+                item.style.cursor = 'pointer';
+                item.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        ${track.coverImage ? 
+                            `<img src="{{ asset('uploads/covers/') }}${track.coverImage}" class="rounded me-2" style="width: 30px; height: 30px; object-fit: cover;">` : 
+                            `<div class="bg-gradient-primary rounded me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;"><i class="fas fa-music text-white" style="font-size: 10px;"></i></div>`
+                        }
+                        <div>
+                            <strong>${track.title}</strong><br>
+                            <small class="text-muted">${track.artist}</small>
+                        </div>
+                    </div>
+                `;
+                item.onclick = () => selectTrack(track.id, track.title, track.artist);
+                resultsContainer.appendChild(item);
+            });
+            
+            if (resultsContainer.children.length === 0) {
+                resultsContainer.innerHTML = '<div class="list-group-item bg-dark text-muted border-secondary">All matching tracks are already in this playlist</div>';
+            }
+            resultsContainer.style.display = 'block';
+        } else {
+            resultsContainer.innerHTML = '<div class="list-group-item bg-dark text-muted border-secondary">No tracks found</div>';
+            resultsContainer.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        console.error('Error searching tracks:', error);
+        const resultsContainer = document.getElementById('searchResults');
+        resultsContainer.innerHTML = '<div class="list-group-item bg-dark text-danger border-secondary">Error searching tracks</div>';
+        resultsContainer.style.display = 'block';
+    });
+}
+
+// Select track function
+function selectTrack(trackId, title, artist) {
+    const selectedTrackId = document.getElementById('selectedTrackId');
+    const selectedTrackText = document.getElementById('selectedTrackText');
+    const selectedTrackInfo = document.getElementById('selectedTrackInfo');
+    const searchResults = document.getElementById('searchResults');
+    const searchTrackInput = document.getElementById('searchTrackInput');
+    
+    if (selectedTrackId) selectedTrackId.value = trackId;
+    if (selectedTrackText) selectedTrackText.textContent = `${title} - ${artist}`;
+    if (selectedTrackInfo) selectedTrackInfo.style.display = 'block';
+    if (searchResults) searchResults.style.display = 'none';
+    if (searchTrackInput) searchTrackInput.value = `${title} - ${artist}`;
+}
+
+// Play all tracks from playlist
+function playAllFromPlaylist(playlistId, playlistName) {
+    // Fetch playlist tracks and play them
+    const url = window.libraryViewPlaylistRoute.replace('__ID__', playlistId);
+    
+    fetch(url, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.playlist.tracks.length > 0) {
+            const tracks = data.playlist.tracks;
+            
+            // Use the global audio player function to play ALL tracks from the playlist
+            if (window.audioPlayer && window.audioPlayer.playAllFromPlaylist) {
+                window.audioPlayer.playAllFromPlaylist(playlistId, playlistName, tracks);
+            } else {
+                showNotification('Audio player not available', 'error');
+            }
+        } else {
+            showNotification('No tracks found in this playlist', 'warning');
+        }
+    })
+    .catch(error => {
+        console.error('Error loading playlist:', error);
+        showNotification('Error loading playlist tracks', 'error');
+    });
+}
+
+// Utility function to show notifications
+function showNotification(message, type) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Create playlist form handler
+    document.getElementById('createPlaylistForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch(window.createPlaylistRoute, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('createPlaylistModal')).hide();
+                showNotification('Playlist created successfully!', 'success');
+                setTimeout(() => {
+                    // Stay on playlists tab after creation
+                    window.location.href = window.location.pathname + '#playlists';
+                    location.reload();
+                }, 1000);
+            } else {
+                showNotification('Error creating playlist: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while creating the playlist.', 'error');
+        });
+    });
+    
+    // Edit playlist form handler
+    document.getElementById('editPlaylistForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const playlistId = document.getElementById('editPlaylistId').value;
+        const url = window.editPlaylistRoute.replace('__ID__', playlistId);
+        
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editPlaylistModal')).hide();
+                showNotification('Playlist updated successfully!', 'success');
+                setTimeout(() => {
+                    // Stay on playlists tab after edit
+                    window.location.href = window.location.pathname + '#playlists';
+                    location.reload();
+                }, 1000);
+            } else {
+                showNotification('Error updating playlist: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while updating the playlist.', 'error');
+        });
+    });
+    
+    // Add track to playlist form handler
+    document.getElementById('addTrackToPlaylistForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const playlistId = document.getElementById('targetPlaylistId').value;
+        const trackId = document.getElementById('selectedTrackId').value;
+        
+        if (!trackId) {
+            showNotification('Please select a track first', 'error');
+            return;
+        }
+        
+        fetch(window.addTrackToPlaylistRoute, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                playlistId: parseInt(playlistId),
+                trackId: parseInt(trackId)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('addTrackToPlaylistModal')).hide();
+                showNotification('Track added to playlist successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = window.location.pathname + '#playlists';
+                    location.reload();
+                }, 1000);
+            } else {
+                showNotification('Error adding track: ' + (data.error || data.message), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while adding the track.', 'error');
+        });
+    });
+    
+    // Search tracks input handler
+    document.getElementById('searchTrackInput').addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        searchTracks(query);
     });
 });
 
-// Edit track
+// Track-related functions
+function showAddToPlaylistModal(trackId, title, artist) {
+    // Set track info
+    document.getElementById('trackIdToAdd').value = trackId;
+    document.getElementById('trackTitleToAdd').textContent = title;
+    document.getElementById('trackArtistToAdd').textContent = artist;
+    
+    // Load user's playlists
+    const playlistSelect = document.getElementById('selectPlaylistForTrack');
+    playlistSelect.innerHTML = '<option value="">Loading playlists...</option>';
+    
+    // Fetch user's playlists
+    const url = window.playlistsForTrackRoute.replace('__TRACK_ID__', trackId);
+    
+    fetch(url, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        playlistSelect.innerHTML = '<option value="">Select a playlist...</option>';
+        
+        if (data.playlists && data.playlists.length > 0) {
+            data.playlists.forEach(playlist => {
+                const option = document.createElement('option');
+                option.value = playlist.id;
+                option.textContent = playlist.name + (playlist.hasTrack ? ' (already contains this track)' : '');
+                if (playlist.hasTrack) {
+                    option.disabled = true;
+                    option.style.color = '#6c757d';
+                }
+                playlistSelect.appendChild(option);
+            });
+        } else {
+            playlistSelect.innerHTML = '<option value="">No playlists available</option>';
+        }
+    })
+    .catch(error => {
+        console.error('Error loading playlists:', error);
+        playlistSelect.innerHTML = '<option value="">Error loading playlists</option>';
+    });
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('addToPlaylistModal'));
+    modal.show();
+}
+
 function editTrack(id, title, artist, album, genre, description) {
+    // Set form values
     document.getElementById('editTrackId').value = id;
     document.getElementById('editTrackTitle').value = title;
     document.getElementById('editTrackArtist').value = artist;
@@ -783,469 +1187,208 @@ function editTrack(id, title, artist, album, genre, description) {
     document.getElementById('editTrackGenre').value = genre || '';
     document.getElementById('editTrackDescription').value = description || '';
     
-    new bootstrap.Modal(document.getElementById('editTrackModal')).show();
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('editTrackModal'));
+    modal.show();
 }
 
-document.getElementById('editTrackForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const trackId = formData.get('track_id');
-    
-    fetch(`{{ path('app_library_edit_track', {'id': '__ID__'}) }}`.replace('__ID__', trackId), {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert('Error: ' + data.error);
-        }
-    })
-    .catch(error => {
-        alert('An error occurred while updating the track');
-        console.error('Error:', error);
-    });
-});
-
-// Show delete track modal
-let trackToDelete = null;
-
-function showDeleteTrackModal(trackId, title, artist) {
-    trackToDelete = trackId;
-    document.getElementById('deleteTrackInfo').textContent = `${title} - ${artist}`;
-    new bootstrap.Modal(document.getElementById('deleteTrackModal')).show();
-}
-
-document.getElementById('confirmDeleteTrack').addEventListener('click', function() {
-    if (trackToDelete) {
-        deleteTrack(trackToDelete);
-    }
-});
-
-// Delete track
-function deleteTrack(trackId) {
-    fetch(`{{ path('app_library_delete_track', {'id': '__ID__'}) }}`.replace('__ID__', trackId), {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('track-' + trackId).remove();
-            bootstrap.Modal.getInstance(document.getElementById('deleteTrackModal')).hide();
-            trackToDelete = null;
-            location.reload(); // Refresh to update counts
-        } else {
-            alert('Error: ' + data.error);
-        }
-    })
-    .catch(error => {
-        alert('An error occurred while deleting the track');
-        console.error('Error:', error);
-    });
-}
-
-// Delete playlist
-function deletePlaylist(playlistId) {
-    if (confirm('Are you sure you want to delete this playlist? This action cannot be undone.')) {
-        fetch(`{{ path('app_library_delete_playlist', {'id': '__ID__'}) }}`.replace('__ID__', playlistId), {
-            method: 'POST'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById('playlist-' + playlistId).remove();
-                window.location.href = window.location.pathname + '#playlists';
-                location.reload(); // Refresh to update counts
-            } else {
-                alert('Error: ' + data.error);
-            }
-        })
-        .catch(error => {
-            alert('An error occurred while deleting the playlist');
-            console.error('Error:', error);
-        });
-    }
-}
-
-// Toggle playlist privacy
-function togglePlaylistPrivacy(playlistId) {
-    fetch(`{{ path('app_library_toggle_playlist_privacy', {'id': '__ID__'}) }}`.replace('__ID__', playlistId), {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.href = window.location.pathname + '#playlists';
-            location.reload(); // Refresh to update UI
-        } else {
-            alert('Error: ' + data.error);
-        }
-    })
-    .catch(error => {
-        alert('An error occurred while updating playlist privacy');
-        console.error('Error:', error);
-    });
-}
-
-// Initialize page - check URL hash for active tab
-document.addEventListener('DOMContentLoaded', function() {
-    checkActiveTab();
-});
-
-// Simple audio player function
-function playTrack(filePath, title, artist) {
-    // Create or update audio element
-    let audio = document.getElementById('libraryAudioPlayer');
-    if (!audio) {
-        audio = document.createElement('audio');
-        audio.id = 'libraryAudioPlayer';
-        audio.controls = true;
-        audio.style.position = 'fixed';
-        audio.style.bottom = '20px';
-        audio.style.right = '20px';
-        audio.style.zIndex = '1000';
-        document.body.appendChild(audio);
-    }
-    
-    audio.src = '/uploads/tracks/' + filePath;
-    audio.load();
-    audio.play().catch(e => {
-        alert('Error playing track: ' + e.message);
-    });
-    
-    // Show currently playing info
-    if (!document.getElementById('nowPlayingInfo')) {
-        const info = document.createElement('div');
-        info.id = 'nowPlayingInfo';
-        info.style.position = 'fixed';
-        info.style.bottom = '80px';
-        info.style.right = '20px';
-        info.style.background = '#343a40';
-        info.style.color = 'white';
-        info.style.padding = '10px';
-        info.style.borderRadius = '5px';
-        info.style.zIndex = '1000';
-        document.body.appendChild(info);
-    }
-    
-    document.getElementById('nowPlayingInfo').innerHTML = `
-        <strong>Now Playing:</strong><br>
-        ${title} - ${artist}
-    `;
-}
-
-// Show Add to Playlist Modal
-function showAddToPlaylistModal(trackId, trackTitle, trackArtist) {
+function deleteTrack(id, title) {
     // Set track info
-    document.getElementById('addToPlaylistTrackInfo').innerHTML = `
-        <div class="d-flex align-items-center">
-            <i class="fas fa-music fa-2x text-primary me-3"></i>
-            <div>
-                <h6 class="mb-0">${trackTitle}</h6>
-                <small class="text-muted">${trackArtist}</small>
-            </div>
-        </div>
-    `;
-
-    // Load user's playlists
-    fetch(`{{ path('app_library_playlists_for_track', {'trackId': '__TRACK_ID__'}) }}`.replace('__TRACK_ID__', trackId))
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            let playlistsHtml = '';
-            
-            if (data.playlists.length === 0) {
-                playlistsHtml = `
-                    <div class="text-center text-muted">
-                        <i class="fas fa-list fa-3x mb-3"></i>
-                        <p>No playlists found. Create a playlist first!</p>
-                    </div>
-                `;
-            } else {
-                playlistsHtml = '<div class="list-group list-group-flush">';
-                data.playlists.forEach(playlist => {
-                    const buttonClass = playlist.hasTrack ? 'btn-danger' : 'btn-success';
-                    const buttonIcon = playlist.hasTrack ? 'minus' : 'plus';
-                    const buttonText = playlist.hasTrack ? 'Remove' : 'Add';
-                    const buttonAction = playlist.hasTrack ? 
-                        `removeTrackFromPlaylist(${trackId}, ${playlist.id})` : 
-                        `addTrackToPlaylist(${trackId}, ${playlist.id})`;
-
-                    playlistsHtml += `
-                        <div class="list-group-item bg-secondary border-secondary d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>${playlist.name}</strong>
-                                <br><small class="text-muted">${playlist.tracksCount} tracks</small>
-                            </div>
-                            <button class="btn ${buttonClass} btn-sm" onclick="${buttonAction}">
-                                <i class="fas fa-${buttonIcon} me-1"></i>${buttonText}
-                            </button>
-                        </div>
-                    `;
-                });
-                playlistsHtml += '</div>';
-            }
-            
-            document.getElementById('addToPlaylistList').innerHTML = playlistsHtml;
-        } else {
-            document.getElementById('addToPlaylistList').innerHTML = `
-                <div class="alert alert-danger">
-                    Error loading playlists: ${data.error}
-                </div>
-            `;
-        }
-    })
-    .catch(error => {
-        document.getElementById('addToPlaylistList').innerHTML = `
-            <div class="alert alert-danger">
-                An error occurred while loading playlists
-            </div>
-        `;
-        console.error('Error:', error);
-    });
-
+    document.getElementById('deleteTrackTitle').textContent = title;
+    
+    // Set up confirmation button
+    const confirmBtn = document.getElementById('confirmDeleteTrack');
+    confirmBtn.onclick = function() {
+        performDeleteTrack(id);
+    };
+    
     // Show modal
-    new bootstrap.Modal(document.getElementById('addToPlaylistModal')).show();
+    const modal = new bootstrap.Modal(document.getElementById('deleteTrackModal'));
+    modal.show();
 }
 
-// Add track to playlist
-function addTrackToPlaylist(trackId, playlistId) {
-    fetch('{{ path('app_library_add_track_to_playlist') }}', {
+// Perform actual track deletion
+function performDeleteTrack(id) {
+    const url = window.deleteTrackRoute.replace('__ID__', id);
+    
+    fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            trackId: trackId,
-            playlistId: playlistId
-        })
+            'X-Requested-With': 'XMLHttpRequest'
+        }
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('deleteTrackModal')).hide();
+            
             // Show success message
-            showToast(data.message, 'success');
-            // Refresh the modal content
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addToPlaylistModal'));
-            if (modal) {
-                modal.hide();
-            }
+            showNotification('Track deleted successfully!', 'success');
+            
+            // Refresh page
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
         } else {
-            showToast('Error: ' + data.error, 'error');
+            showNotification('Error deleting track: ' + (data.error || data.message), 'error');
         }
     })
     .catch(error => {
-        showToast('An error occurred while adding track to playlist', 'error');
         console.error('Error:', error);
+        showNotification('An error occurred while deleting the track.', 'error');
     });
 }
 
-// Remove track from playlist
-function removeTrackFromPlaylist(trackId, playlistId) {
-    fetch('{{ path('app_library_remove_track_from_playlist') }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            trackId: trackId,
-            playlistId: playlistId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Show success message
-            showToast(data.message, 'success');
-            // Refresh the modal content
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addToPlaylistModal'));
-            if (modal) {
-                modal.hide();
+// Add form submission handlers
+document.addEventListener('DOMContentLoaded', function() {
+    // Add to playlist form handler
+    const addToPlaylistForm = document.getElementById('addToPlaylistForm');
+    if (addToPlaylistForm) {
+        addToPlaylistForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const trackId = document.getElementById('trackIdForPlaylist').value;
+            const playlistId = document.getElementById('playlistSelect').value;
+            
+            if (!playlistId) {
+                showNotification('Please select a playlist', 'warning');
+                return;
             }
-        } else {
-            showToast('Error: ' + data.error, 'error');
-        }
-    })
-    .catch(error => {
-        showToast('An error occurred while removing track from playlist', 'error');
-        console.error('Error:', error);
-    });
-}
-
-// Show Add Tracks to Playlist Modal
-let currentPlaylistId = null;
-
-function showAddTracksToPlaylistModal(playlistId, playlistName) {
-    currentPlaylistId = playlistId;
-    document.getElementById('targetPlaylistName').textContent = playlistName;
-    
-    // Clear previous search
-    document.getElementById('trackSearchInput').value = '';
-    document.getElementById('trackSearchResults').innerHTML = `
-        <div class="text-center text-muted">
-            <i class="fas fa-search fa-3x mb-3"></i>
-            <p>Search for tracks to add to this playlist</p>
-        </div>
-    `;
-    
-    // Show modal
-    new bootstrap.Modal(document.getElementById('addTracksToPlaylistModal')).show();
-    
-    // Focus on search input
-    setTimeout(() => {
-        document.getElementById('trackSearchInput').focus();
-    }, 500);
-}
-
-// Search tracks for playlist
-function searchTracksForPlaylist() {
-    const query = document.getElementById('trackSearchInput').value;
-    
-    if (!currentPlaylistId) {
-        showToast('No playlist selected', 'error');
-        return;
+            
+            // Call add track to playlist function
+            addTrackToPlaylist(trackId, playlistId);
+        });
     }
     
-    // Show loading
-    document.getElementById('trackSearchResults').innerHTML = `
-        <div class="text-center">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Searching...</span>
-            </div>
-        </div>
-    `;
-    
-    fetch(`{{ path('app_library_search_tracks') }}?q=${encodeURIComponent(query)}&playlist_id=${currentPlaylistId}`)
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            let resultsHtml = '';
+    // Edit track form handler  
+    const editTrackForm = document.getElementById('editTrackForm');
+    if (editTrackForm) {
+        editTrackForm.addEventListener('submit', function(e) {
+            e.preventDefault();
             
-            if (data.tracks.length === 0) {
-                resultsHtml = `
-                    <div class="text-center text-muted">
-                        <i class="fas fa-search fa-3x mb-3"></i>
-                        <p>No tracks found matching "${query}"</p>
-                    </div>
-                `;
-            } else {
-                resultsHtml = '<div class="list-group list-group-flush">';
-                data.tracks.forEach(track => {
-                    const buttonClass = track.inPlaylist ? 'btn-danger' : 'btn-success';
-                    const buttonIcon = track.inPlaylist ? 'minus' : 'plus';
-                    const buttonText = track.inPlaylist ? 'Remove' : 'Add';
-                    const buttonAction = track.inPlaylist ? 
-                        `removeTrackFromPlaylistSearch(${track.id})` : 
-                        `addTrackToPlaylistSearch(${track.id})`;
+            const formData = new FormData(this);
+            const trackId = document.getElementById('editTrackId').value;
+            const url = window.editTrackRoute.replace('__ID__', trackId);
+            
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal
+                    bootstrap.Modal.getInstance(document.getElementById('editTrackModal')).hide();
                     
-                    const coverHtml = track.coverImage ? 
-                        `<img src="/uploads/covers/${track.coverImage}" alt="Cover" class="rounded me-3" width="40" height="40">` :
-                        `<div class="bg-gradient-primary rounded d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: linear-gradient(45deg, #667eea, #764ba2);">
-                            <i class="fas fa-music text-white"></i>
-                        </div>`;
-
-                    resultsHtml += `
-                        <div class="list-group-item bg-secondary border-secondary d-flex align-items-center">
-                            ${coverHtml}
-                            <div class="flex-grow-1">
-                                <strong>${track.title}</strong>
-                                <br><small class="text-muted">${track.artist} • ${track.duration}</small>
-                                <br><small class="text-muted">by ${track.uploadedBy}</small>
-                            </div>
-                            <button class="btn ${buttonClass} btn-sm ms-3" onclick="${buttonAction}">
-                                <i class="fas fa-${buttonIcon} me-1"></i>${buttonText}
-                            </button>
-                        </div>
-                    `;
-                });
-                resultsHtml += '</div>';
-            }
-            
-            document.getElementById('trackSearchResults').innerHTML = resultsHtml;
-        } else {
-            document.getElementById('trackSearchResults').innerHTML = `
-                <div class="alert alert-danger">
-                    Error searching tracks: ${data.error}
-                </div>
-            `;
-        }
-    })
-    .catch(error => {
-        document.getElementById('trackSearchResults').innerHTML = `
-            <div class="alert alert-danger">
-                An error occurred while searching tracks
-            </div>
-        `;
-        console.error('Error:', error);
-    });
-}
-
-// Add track to playlist from search
-function addTrackToPlaylistSearch(trackId) {
-    addTrackToPlaylist(trackId, currentPlaylistId);
-    // Refresh search results after a delay
-    setTimeout(() => {
-        searchTracksForPlaylist();
-    }, 500);
-}
-
-// Remove track from playlist from search
-function removeTrackFromPlaylistSearch(trackId) {
-    removeTrackFromPlaylist(trackId, currentPlaylistId);
-    // Refresh search results after a delay
-    setTimeout(() => {
-        searchTracksForPlaylist();
-    }, 500);
-}
-
-// Enhanced search with Enter key
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('trackSearchInput');
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchTracksForPlaylist();
-            }
+                    // Show success message
+                    showNotification('Track updated successfully!', 'success');
+                    
+                    // Refresh page
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showNotification('Error updating track: ' + (data.error || data.message), 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred while updating the track.', 'error');
+            });
         });
     }
 });
 
-// Toast notification function
-function showToast(message, type = 'info') {
-    // Create toast container if it doesn't exist
-    let toastContainer = document.getElementById('toastContainer');
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.id = 'toastContainer';
-        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-        toastContainer.style.zIndex = '9999';
-        document.body.appendChild(toastContainer);
-    }
+// Add track to playlist function
+function addTrackToPlaylist(trackId, playlistId) {
+    fetch('/library/playlist/' + playlistId + '/add-track/' + trackId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('addToPlaylistModal')).hide();
+            
+            // Show success message
+            showNotification('Track added to playlist successfully!', 'success');
+        } else {
+            showNotification('Error adding track to playlist: ' + (data.error || data.message), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while adding the track to playlist.', 'error');
+    });
+}
+
+// Remove track from playlist function
+function removeTrackFromPlaylist(playlistId, trackId, trackTitle, playlistName) {
+    // Set modal content
+    document.getElementById('removeTrackTitle').textContent = trackTitle;
+    document.getElementById('removeFromPlaylistName').textContent = playlistName;
     
-    const toastId = 'toast_' + Date.now();
-    const bgClass = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-info';
+    // Set up confirmation button
+    const confirmBtn = document.getElementById('confirmRemoveTrackFromPlaylist');
+    confirmBtn.onclick = function() {
+        performRemoveTrackFromPlaylist(playlistId, trackId);
+    };
     
-    const toastHtml = `
-        <div id="${toastId}" class="toast ${bgClass} text-white" role="alert">
-            <div class="toast-body">
-                <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'} me-2"></i>
-                ${message}
-            </div>
-        </div>
-    `;
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('removeTrackFromPlaylistModal'));
+    modal.show();
+}
+
+// Perform actual track removal from playlist
+function performRemoveTrackFromPlaylist(playlistId, trackId) {
+    const formData = new FormData();
+    formData.append('playlistId', playlistId);
+    formData.append('trackId', trackId);
     
-    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-    
-    const toastElement = document.getElementById(toastId);
-    const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
-    toast.show();
-    
-    // Remove toast element after it's hidden
-    toastElement.addEventListener('hidden.bs.toast', () => {
-        toastElement.remove();
+    fetch(window.removeTrackFromPlaylistRoute, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('removeTrackFromPlaylistModal')).hide();
+            
+            showNotification('Track removed from playlist successfully!', 'success');
+            
+            // Refresh the playlist view if modal is open
+            const modal = bootstrap.Modal.getInstance(document.getElementById('viewPlaylistModal'));
+            if (modal && modal._isShown) {
+                // Reload the playlist data
+                setTimeout(() => {
+                    viewPlaylist(playlistId);
+                }, 500);
+            } else {
+                // Otherwise refresh the page
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            }
+        } else {
+            showNotification('Error removing track: ' + (data.error || data.message), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while removing the track.', 'error');
     });
 }
 </script>

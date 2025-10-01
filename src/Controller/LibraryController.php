@@ -16,8 +16,17 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * Controller for managing user's personal library
+ * LibraryController - Personal music library management
  * 
+ * This controller provides comprehensive CRUD operations for:
+ * - User's personal track collection
+ * - Playlist creation, editing, and management
+ * - Track-to-playlist associations
+ * - Library search and filtering capabilities
+ * 
+ * All methods require user authentication and operate only on
+ * the authenticated user's content for security.
+ */
  * Handles user's uploaded tracks and created playlists management:
  * - Display user's tracks and playlists
  * - Edit track information
@@ -222,6 +231,7 @@ class LibraryController extends AbstractController
         
         $name = $request->request->get('name');
         $description = $request->request->get('description', '');
+        $isPublic = $request->request->get('is_public', false);
 
         if (empty($name)) {
             return new JsonResponse(['error' => 'Playlist name is required'], 400);
@@ -232,7 +242,7 @@ class LibraryController extends AbstractController
             $playlist->setName($name);
             $playlist->setDescription($description);
             $playlist->setOwner($user);
-            $playlist->setIsPublic(false); // Private by default
+            $playlist->setIsPublic((bool) $isPublic);
 
             $this->entityManager->persist($playlist);
             $this->entityManager->flush();
@@ -243,7 +253,8 @@ class LibraryController extends AbstractController
                 'playlist' => [
                     'id' => $playlist->getId(),
                     'name' => $playlist->getName(),
-                    'description' => $playlist->getDescription()
+                    'description' => $playlist->getDescription(),
+                    'is_public' => $playlist->isPublic()
                 ]
             ]);
 
@@ -401,6 +412,7 @@ class LibraryController extends AbstractController
                     'name' => $playlist->getName(),
                     'description' => $playlist->getDescription(),
                     'isPublic' => $playlist->isPublic(),
+                    'coverImage' => $playlist->getCoverImage(),
                     'tracksCount' => count($tracks),
                     'totalDuration' => $playlist->getFormattedTotalDuration(),
                     'createdAt' => $playlist->getCreatedAt()->format('M d, Y'),
@@ -458,16 +470,32 @@ class LibraryController extends AbstractController
     #[Route('/add-track-to-playlist', name: 'app_library_add_track_to_playlist', methods: ['POST'])]
     public function addTrackToPlaylist(Request $request): JsonResponse
     {
-        /** @var User $user */
-        $user = $this->getUser();
-        
-        $data = json_decode($request->getContent(), true);
-        $trackId = $data['trackId'] ?? null;
-        $playlistId = $data['playlistId'] ?? null;
+        try {
+            /** @var User $user */
+            $user = $this->getUser();
+            
+            if (!$user) {
+                return new JsonResponse(['error' => 'User not authenticated'], 401);
+            }
+            
+            // Handle both JSON and FormData
+            $trackId = null;
+            $playlistId = null;
+            
+            $contentType = $request->headers->get('content-type', '');
+            
+            if (str_contains($contentType, 'application/json')) {
+                $data = json_decode($request->getContent(), true);
+                $trackId = $data['trackId'] ?? null;
+                $playlistId = $data['playlistId'] ?? null;
+            } else {
+                $trackId = $request->request->get('trackId');
+                $playlistId = $request->request->get('playlistId');
+            }
 
-        if (!$trackId || !$playlistId) {
-            return new JsonResponse(['error' => 'Track ID and Playlist ID are required'], 400);
-        }
+            if (!$trackId || !$playlistId) {
+                return new JsonResponse(['error' => 'Track ID and Playlist ID are required'], 400);
+            }
 
         $track = $this->entityManager->getRepository(Track::class)->find($trackId);
         $playlist = $this->entityManager->getRepository(Playlist::class)->find($playlistId);
@@ -498,6 +526,9 @@ class LibraryController extends AbstractController
         } catch (\Exception $e) {
             return new JsonResponse(['error' => 'Error adding track to playlist: ' . $e->getMessage()], 500);
         }
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => 'Unexpected error: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -506,16 +537,32 @@ class LibraryController extends AbstractController
     #[Route('/remove-track-from-playlist', name: 'app_library_remove_track_from_playlist', methods: ['POST'])]
     public function removeTrackFromPlaylist(Request $request): JsonResponse
     {
-        /** @var User $user */
-        $user = $this->getUser();
-        
-        $data = json_decode($request->getContent(), true);
-        $trackId = $data['trackId'] ?? null;
-        $playlistId = $data['playlistId'] ?? null;
+        try {
+            /** @var User $user */
+            $user = $this->getUser();
+            
+            if (!$user) {
+                return new JsonResponse(['error' => 'User not authenticated'], 401);
+            }
+            
+            // Handle both JSON and FormData
+            $trackId = null;
+            $playlistId = null;
+            
+            $contentType = $request->headers->get('content-type', '');
+            
+            if (str_contains($contentType, 'application/json')) {
+                $data = json_decode($request->getContent(), true);
+                $trackId = $data['trackId'] ?? null;
+                $playlistId = $data['playlistId'] ?? null;
+            } else {
+                $trackId = $request->request->get('trackId');
+                $playlistId = $request->request->get('playlistId');
+            }
 
-        if (!$trackId || !$playlistId) {
-            return new JsonResponse(['error' => 'Track ID and Playlist ID are required'], 400);
-        }
+            if (!$trackId || !$playlistId) {
+                return new JsonResponse(['error' => 'Track ID and Playlist ID are required'], 400);
+            }
 
         $track = $this->entityManager->getRepository(Track::class)->find($trackId);
         $playlist = $this->entityManager->getRepository(Playlist::class)->find($playlistId);
@@ -540,6 +587,9 @@ class LibraryController extends AbstractController
 
         } catch (\Exception $e) {
             return new JsonResponse(['error' => 'Error removing track from playlist: ' . $e->getMessage()], 500);
+        }
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => 'Unexpected error: ' . $e->getMessage()], 500);
         }
     }
 
