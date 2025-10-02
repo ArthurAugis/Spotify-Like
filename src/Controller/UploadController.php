@@ -119,8 +119,8 @@ class UploadController extends AbstractController
         if ($coverFile && $coverFile->isValid() && $coverFile->getSize() > 0) {
             try {
                 $coverMimeType = $coverFile->getMimeType();
-                if (!in_array($coverMimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/avif'])) {
-                    $errors[] = 'Image format not supported. Use JPG, PNG, GIF or AVIF.';
+                if (!in_array($coverMimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/avif', 'image/webp'])) {
+                    $errors[] = 'Image format not supported. Use JPG, PNG, GIF, WEBP or AVIF.';
                 }
             } catch (\Exception $e) {
                 $errors[] = 'Unable to verify image file. Make sure it is a valid file.';
@@ -129,13 +129,20 @@ class UploadController extends AbstractController
 
         // If validation errors exist, return form with errors and preserve input data
         if (!empty($errors)) {
+            // Re-fetch user playlists for the form (was missing -> caused Twig 'playlists' undefined)
+            $playlists = [];
+            if ($user) {
+                $playlists = $this->entityManager->getRepository(Playlist::class)
+                    ->findBy(['owner' => $user], ['createdAt' => 'DESC']);
+            }
             return $this->render('upload/track.html.twig', [
                 'errors' => $errors,
                 'title' => $title,
                 'artist' => $artist,
                 'album' => $album,
                 'genre' => $genre,
-                'description' => $description
+                'description' => $description,
+                'playlists' => $playlists
             ]);
         }
 
@@ -180,13 +187,19 @@ class UploadController extends AbstractController
 
         } catch (\Exception $e) {
             $errors[] = 'Upload error: ' . $e->getMessage();
+            $playlists = [];
+            if ($user) {
+                $playlists = $this->entityManager->getRepository(Playlist::class)
+                    ->findBy(['owner' => $user], ['createdAt' => 'DESC']);
+            }
             return $this->render('upload/track.html.twig', [
                 'errors' => $errors,
                 'title' => $title,
                 'artist' => $artist,
                 'album' => $album,
                 'genre' => $genre,
-                'description' => $description
+                'description' => $description,
+                'playlists' => $playlists
             ]);
         }
     }
