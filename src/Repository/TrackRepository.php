@@ -66,4 +66,56 @@ class TrackRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * Find tracks by genre excluding user's own tracks
+     */
+    public function findByGenreExcludingUser(string $genre, $user, int $limit = 10): array
+    {
+        return $this->createQueryBuilder('t')
+            ->where('t.genre = :genre')
+            ->andWhere('t.uploadedBy != :user')
+            ->setParameter('genre', $genre)
+            ->setParameter('user', $user)
+            ->orderBy('t.playCount', 'DESC')
+            ->addOrderBy('t.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find tracks by artist excluding user's own tracks
+     */
+    public function findByArtistExcludingUser(string $artist, $user, int $limit = 10): array
+    {
+        return $this->createQueryBuilder('t')
+            ->where('t.artist = :artist')
+            ->andWhere('t.uploadedBy != :user')
+            ->setParameter('artist', $artist)
+            ->setParameter('user', $user)
+            ->orderBy('t.playCount', 'DESC')
+            ->addOrderBy('t.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find recent tracks excluding user's own tracks
+     */
+    public function findRecentTracksExcludingUser($user, int $days = 30, int $limit = 10): array
+    {
+        $date = new \DateTime("-{$days} days");
+        
+        return $this->createQueryBuilder('t')
+            ->where('t.createdAt > :date')
+            ->andWhere('t.uploadedBy != :user')
+            ->setParameter('date', $date)
+            ->setParameter('user', $user)
+            ->orderBy('t.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
 }

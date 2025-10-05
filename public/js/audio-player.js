@@ -1,16 +1,15 @@
 /**
- * Spotify-Like Audio Player
- * Unified audio player system for the entire application
+ * Unified Audio Player System
+ * Global audio player for streaming platform
  */
 
 class AudioPlayer {
     constructor() {
-        // Audio state
         this.currentAudio = null;
         this.currentTrackInfo = null;
         this.currentPlaylistQueue = [];
         this.currentTrackIndex = 0;
-        this.loopMode = 0; // 0: no loop, 1: loop playlist, 2: loop track
+        this.loopMode = 0;
         this.isPlaying = false;
         this.isDragging = false;
         this.volume = 100;
@@ -23,9 +22,6 @@ class AudioPlayer {
         }
     }
     
-    /**
-     * Initialize the audio player
-     */
     init() {
         this.setupEventListeners();
         this.updateLoopButtons();
@@ -33,21 +29,14 @@ class AudioPlayer {
         console.log('AudioPlayer initialized');
     }
     
-    /**
-     * Play a track with full player functionality
-     */
     playTrack(audioFile, title, artist, coverImage = null) {
-        // Stop current audio if playing
         if (this.currentAudio) {
             this.currentAudio.pause();
             this.currentAudio = null;
         }
         
-        // Create new audio element
         this.currentAudio = new Audio(`/uploads/tracks/${audioFile}`);
         this.currentTrackInfo = { audioFile, title, artist, coverImage };
-        
-        // Restore the previous volume setting
         this.currentAudio.volume = this.volume / 100;
         
         // Sync volume sliders to ensure UI consistency

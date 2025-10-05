@@ -1,0 +1,320 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Music Recommendations{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .recommendation-card {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .recommendation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .recommendation-reason {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .recommendation-score {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffd700;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        
+        .recommendation-actions {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .recommendation-card:hover .recommendation-actions {
+            opacity: 1;
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0 -1.5rem 1.5rem -1.5rem;
+            padding: 1rem 1.5rem;
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .generate-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .generate-btn:hover {
+            background: linear-gradient(45deg, #20c997, #28a745);
+            transform: translateY(-1px);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 mb-1">
+                        <i class="fas fa-magic me-2"></i>
+                        Discover New Music
+                    </h1>
+                    <p class="text-muted mb-0">Personalized recommendations just for you</p>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-success generate-btn" id="generateBtn">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Generate New
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if groupedRecommendations is empty %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body empty-state">
+                        <i class="fas fa-music fa-3x mb-3 text-muted"></i>
+                        <h4>No Recommendations Yet</h4>
+                        <p class="mb-4">We need to learn your music taste first. Upload some tracks or explore the library!</p>
+                        <button type="button" class="btn btn-primary generate-btn" id="generateFirstBtn">
+                            <i class="fas fa-magic me-2"></i>
+                            Generate First Recommendations
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        {% for reason, recommendations in groupedRecommendations %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="section-header">
+                            <h3 class="h5 mb-0">
+                                {% if reason == 'Based on your favorite genres' %}
+                                    <i class="fas fa-tags me-2"></i>
+                                {% elseif reason == 'From artists you like' %}
+                                    <i class="fas fa-user-friends me-2"></i>
+                                {% elseif reason == 'Trending now' %}
+                                    <i class="fas fa-fire me-2"></i>
+                                {% else %}
+                                    <i class="fas fa-star me-2"></i>
+                                {% endif %}
+                                {{ reason }}
+                                <span class="badge bg-light text-dark ms-2">{{ recommendations|length }}</span>
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for recommendation in recommendations %}
+                                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                                        <div class="card recommendation-card h-100" data-recommendation-id="{{ recommendation.id }}">
+                                            <div class="position-relative">
+                                                {% if recommendation.track.coverImage %}
+                                                    {% set coverPath = '/uploads/covers/' ~ recommendation.track.coverImage %}
+                                                {% else %}
+                                                    {% set coverPath = 'data:image/svg+xml;base64,' ~ 'PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDMwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjMzc0MTUxIi8+CjxwYXRoIGQ9Ik0xNTAgMjEwQzkzIDIxMCAyMTAgMTg2IDIxMCAxNTBTMTg2IDkwIDE1MCA5MFM5MCA5NCAxMDYgMTUwUzEwNiAyMTAgMTUwIDIxMFoiIGZpbGw9IiM2QjcyODAiLz4KPHBhdGggZD0iTTE1MCA4QzEzNiAxODAgMTgwIDEzNiAxODAgMTUwUzEzNiAyMDIgMTUwIDEyMFMxMjAgMTMyIDE1MCAxNTBTMTMyIDE4MCAxNTAgMThUIiBmaWxsPSIjOUNBM0FGIi8+Cjwvc3ZnPgo=' %}
+                                                {% endif %}
+                                                <img src="{{ coverPath }}" 
+                                                     class="card-img-top" 
+                                                     alt="{{ recommendation.track.title }} cover"
+                                                     style="height: 200px; object-fit: cover;">
+                                                
+                                                <div class="position-absolute top-0 end-0 p-2">
+                                                    <span class="recommendation-score">
+                                                        {{ (recommendation.score * 100)|round }}%
+                                                    </span>
+                                                </div>
+                                                
+                                                <div class="position-absolute bottom-0 start-0 end-0 p-2 recommendation-actions">
+                                                    <div class="d-flex gap-1">
+                                                        <button type="button" 
+                                                                class="btn btn-success btn-sm flex-fill play-btn"
+                                                                onclick="safePlayTrack('{{ recommendation.track.audioFile }}', '{{ recommendation.track.title|e('js') }}', '{{ recommendation.track.artist|e('js') }}', '{{ recommendation.track.coverImage }}')">
+                                                            <i class="fas fa-play"></i>
+                                                        </button>
+                                                        <button type="button" 
+                                                                class="btn btn-primary btn-sm like-btn"
+                                                                onclick="likeRecommendation({{ recommendation.id }})">
+                                                            <i class="fas fa-heart"></i>
+                                                        </button>
+                                                        <button type="button" 
+                                                                class="btn btn-outline-light btn-sm dismiss-btn"
+                                                                onclick="dismissRecommendation({{ recommendation.id }})">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="card-body p-3">
+                                                <h6 class="card-title mb-1 text-truncate">{{ recommendation.track.title }}</h6>
+                                                <p class="card-text text-muted small mb-2">{{ recommendation.track.artist }}</p>
+                                                
+                                                {% if recommendation.track.genre %}
+                                                    <span class="badge bg-secondary">{{ recommendation.track.genre }}</span>
+                                                {% endif %}
+                                                
+                                                {% if recommendation.track.duration %}
+                                                    {% set minutes = (recommendation.track.duration / 60)|round(0, 'floor') %}
+                                                    {% set seconds = (recommendation.track.duration % 60)|round %}
+                                                    <small class="text-muted float-end">{{ minutes }}:{{ seconds < 10 ? '0' ~ seconds : seconds }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-body text-center p-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mb-0">Generating recommendations...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Generate recommendations
+        document.getElementById('generateBtn')?.addEventListener('click', generateRecommendations);
+        document.getElementById('generateFirstBtn')?.addEventListener('click', generateRecommendations);
+
+        function generateRecommendations() {
+            const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+            loadingModal.show();
+
+            fetch('{{ path('app_recommendations_generate') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingModal.hide();
+                
+                if (data.success) {
+                    showToast(`Generated ${data.count} new recommendations!`, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast(data.error || 'Failed to generate recommendations', 'error');
+                }
+            })
+            .catch(error => {
+                loadingModal.hide();
+                showToast('An error occurred while generating recommendations', 'error');
+                console.error('Error:', error);
+            });
+        }
+
+        // Like recommendation
+        function likeRecommendation(recommendationId) {
+            const btn = event.target.closest('.like-btn');
+            btn.disabled = true;
+
+            fetch(`{{ path('app_recommendations_like', {id: 'RECOMMENDATION_ID'}) }}`.replace('RECOMMENDATION_ID', recommendationId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    btn.innerHTML = '<i class="fas fa-heart text-danger"></i>';
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-outline-danger');
+                    showToast('Recommendation liked!', 'success');
+                } else {
+                    showToast(data.message || 'Failed to like recommendation', 'error');
+                }
+            })
+            .catch(error => {
+                showToast('An error occurred', 'error');
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                btn.disabled = false;
+            });
+        }
+
+        // Dismiss recommendation
+        function dismissRecommendation(recommendationId) {
+            const card = document.querySelector(`[data-recommendation-id="${recommendationId}"]`);
+            
+            fetch(`{{ path('app_recommendations_dismiss', {id: 'RECOMMENDATION_ID'}) }}`.replace('RECOMMENDATION_ID', recommendationId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.8)';
+                    
+                    setTimeout(() => {
+                        card.remove();
+                        showToast('Recommendation dismissed', 'info');
+                    }, 300);
+                } else {
+                    showToast(data.message || 'Failed to dismiss recommendation', 'error');
+                }
+            })
+            .catch(error => {
+                showToast('An error occurred', 'error');
+                console.error('Error:', error);
+            });
+        }
+
+        // Make functions globally available
+        window.likeRecommendation = likeRecommendation;
+        window.dismissRecommendation = dismissRecommendation;
+    </script>
+{% endblock %}

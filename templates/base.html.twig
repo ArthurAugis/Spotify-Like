@@ -1,28 +1,15 @@
-<!--
-    Onzeer - Music Streaming Platform
-    Base Template: Main layout with global components
-    
-    Features:
-    - Responsive navigation with search functionality
-    - Global audio player with fullscreen mode
-    - Toast notifications system
-    - Bootstrap 5 + FontAwesome integration
--->
 <!DOCTYPE html>
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Onzeer{% endblock %}</title>
+        <title>{% block title %}Music Platform{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🎵</text></svg>">
         
-        <!-- Bootstrap 5 CSS -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <!-- FontAwesome Icons -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
         
         {% block stylesheets %}
             <style>
-                /* Global Theme Styles */
                 body {
                     background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 50%, #1a1a2e 100%);
                     min-height: 100vh;
@@ -203,7 +190,7 @@
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container">
                 <a class="navbar-brand" href="{{ path('app_home') }}">
-                    <i class="fas fa-compact-disc"></i> <strong>Onzeer</strong>
+                    <i class="fas fa-compact-disc"></i> <strong>Music Platform</strong>
                 </a>
                 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -233,6 +220,13 @@
                     
                     <ul class="navbar-nav ms-auto">
                         {% if app.user %}
+                            <li class="nav-item">
+                                <a class="nav-link position-relative" href="{{ path('app_recommendations') }}">
+                                    <i class="fas fa-magic"></i> Discover
+                                    <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill" 
+                                          id="recommendationsBadge" style="display: none; font-size: 0.6rem;">0</span>
+                                </a>
+                            </li>
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="fas fa-user"></i> {{ app.user.firstName }}
@@ -243,6 +237,9 @@
                                     </a></li>
                                     <li><a class="dropdown-item" href="{{ path('app_library') }}">
                                         <i class="fas fa-music"></i> My Library
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_recommendations') }}">
+                                        <i class="fas fa-magic"></i> Recommendations
                                     </a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="{{ path('app_logout') }}">
@@ -542,6 +539,30 @@
                 searchSuggestions.style.display = 'none';
                 searchInput.value = '';
             };
+
+            // Update recommendations badge
+            function updateRecommendationsBadge() {
+                {% if app.user %}
+                fetch('{{ path('app_recommendations_count') }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const badge = document.getElementById('recommendationsBadge');
+                        if (badge && data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.style.display = 'inline';
+                        } else if (badge) {
+                            badge.style.display = 'none';
+                        }
+                    })
+                    .catch(error => console.error('Error updating recommendations badge:', error));
+                {% endif %}
+            }
+
+            // Update badge on page load
+            updateRecommendationsBadge();
+            
+            // Update badge every 5 minutes
+            setInterval(updateRecommendationsBadge, 5 * 60 * 1000);
         });
         </script>
         
