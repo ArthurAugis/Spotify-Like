@@ -3,10 +3,16 @@
  * Global audio player for streaming platform
  */
 
-// Check if AudioPlayer is already defined to prevent redeclaration
-if (typeof window.AudioPlayer === 'undefined') {
+// Use IIFE to prevent multiple executions
+(function() {
+    'use strict';
     
-window.AudioPlayer = class AudioPlayer {
+    // Check if AudioPlayer is already defined to prevent redeclaration
+    if (typeof window.AudioPlayer !== 'undefined') {
+        return; // Already loaded, exit early
+    }
+    
+window.AudioPlayer = class {
     constructor() {
         this.currentAudio = null;
         this.currentTrackInfo = null;
@@ -594,9 +600,6 @@ window.AudioPlayer = class AudioPlayer {
     }
 }
 
-// End of AudioPlayer class definition check
-}
-
 // Create global instance (only if it doesn't exist)
 if (!window.audioPlayer || !(window.audioPlayer instanceof window.AudioPlayer)) {
     window.audioPlayer = new window.AudioPlayer();
@@ -611,3 +614,5 @@ window.playAllFromCard = (playlistId, playlistName) => {
     // This will be implemented by each page that needs it
     console.log('playAllFromCard called:', playlistId, playlistName);
 };
+
+})(); // End of IIFE
