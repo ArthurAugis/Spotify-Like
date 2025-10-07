@@ -1,0 +1,11 @@
+/app/
+.env.local
+.vscode/
+.idea/
+*.log
+*.tmp
+node_modules/
+/vendor/
+.DS_Store
+Thumbs.db
+docker-compose.override.yml
