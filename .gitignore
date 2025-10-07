@@ -1,5 +1,5 @@
 
-# Onzeer Music Platform - Git Ignore Configuration
+# Symfony Music Platform - Git Ignore Configuration
 
 ###> symfony/framework-bundle ###
 /.env.local

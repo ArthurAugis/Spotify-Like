@@ -3,7 +3,10 @@
  * Global audio player for streaming platform
  */
 
-class AudioPlayer {
+// Check if AudioPlayer is already defined to prevent redeclaration
+if (typeof window.AudioPlayer === 'undefined') {
+    
+window.AudioPlayer = class AudioPlayer {
     constructor() {
         this.currentAudio = null;
         this.currentTrackInfo = null;
@@ -591,8 +594,13 @@ class AudioPlayer {
     }
 }
 
-// Create global instance
-window.audioPlayer = new AudioPlayer();
+// End of AudioPlayer class definition check
+}
+
+// Create global instance (only if it doesn't exist)
+if (!window.audioPlayer || !(window.audioPlayer instanceof window.AudioPlayer)) {
+    window.audioPlayer = new window.AudioPlayer();
+}
 
 // Global functions for backward compatibility
 window.playTrack = (audioFile, title, artist, coverImage) => {

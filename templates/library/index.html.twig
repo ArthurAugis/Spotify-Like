@@ -200,7 +200,7 @@
                                                         <i class="fas fa-plus"></i>
                                                     </button>
                                                     <button class="btn btn-outline-warning" 
-                                                            onclick="editTrack({{ track.id }}, '{{ track.title|escape('js') }}', '{{ track.artist|escape('js') }}', '{% if track.playlists|length > 0 %}{% for playlist in track.playlists %}{% if playlist.owner == app.user %}{{ playlist.name|escape('js') }}{% endif %}{% endfor %}{% endif %}', '{{ track.genre|escape('js') }}', '{{ track.description|escape('js') }}')"
+                                                            onclick="editTrack({{ track.id }}, '{{ track.title|escape('js') }}', '{{ track.artist|escape('js') }}', '{% for playlist in track.playlists %}{% if playlist.owner == app.user %}{{ playlist.name|escape('js') }}{% endif %}{% endfor %}', '{{ track.genre|escape('js') }}', '{{ track.description|escape('js') }}')"
                                                             title="Edit">
                                                         <i class="fas fa-edit"></i>
                                                     </button>

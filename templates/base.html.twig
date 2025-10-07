@@ -471,8 +471,10 @@
                     suggestions.innerHTML += '<h6 class="dropdown-header"><i class="fas fa-music me-2"></i>Tracks</h6>';
                     
                     results.tracks.slice(0, 3).forEach(track => {
+                        const safeTitle = track.title.replace(/'/g, "\\'").replace(/"/g, '\\"');
+                        const safeArtist = track.artist.replace(/'/g, "\\'").replace(/"/g, '\\"');
                         suggestions.innerHTML += `
-                            <a class="dropdown-item d-flex align-items-center" href="#" onclick="playTrackFromSearch('${track.audioFile}', '${track.title.replace(/'/g, '\\'')}', '${track.artist.replace(/'/g, '\\'')}', '${track.coverImage || ''}')">
+                            <a class="dropdown-item d-flex align-items-center" href="#" onclick="playTrackFromSearch('${track.audioFile}', '${safeTitle}', '${safeArtist}', '${track.coverImage || ''}')">
                                 <div class="me-3">
                                     ${track.coverImage ? 
                                         `<img src="{{ asset('uploads/covers/') }}${track.coverImage}" class="rounded" style="width: 30px; height: 30px; object-fit: cover;">` :
