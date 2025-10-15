@@ -22,12 +22,12 @@
 ###< symfony/asset-mapper ###
 
 # User uploaded content (keep directories, ignore files)
-/public/uploads/audio/*
-/public/uploads/covers/*
-/public/uploads/profiles/*
-!/public/uploads/audio/.gitkeep
-!/public/uploads/covers/.gitkeep
-!/public/uploads/profiles/.gitkeep
+/var/uploads/tracks/*
+/var/uploads/covers/*
+/var/uploads/profiles/*
+!/var/uploads/tracks/.gitkeep
+!/var/uploads/covers/.gitkeep
+!/var/uploads/profiles/.gitkeep
 
 # IDE and editor files
 .vscode/

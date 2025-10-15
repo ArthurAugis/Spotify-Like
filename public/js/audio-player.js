@@ -44,7 +44,8 @@ window.AudioPlayer = class {
             this.currentAudio = null;
         }
         
-        this.currentAudio = new Audio(`/uploads/tracks/${audioFile}`);
+        // Use secure media route instead of direct file access
+        this.currentAudio = new Audio(`/media/track/${audioFile}`);
         this.currentTrackInfo = { audioFile, title, artist, coverImage };
         this.currentAudio.volume = this.volume / 100;
         
@@ -148,7 +149,8 @@ window.AudioPlayer = class {
      * Update track info in both players
      */
     updateTrackInfo(title, artist, coverImage) {
-        const coverPath = coverImage ? `/uploads/covers/${coverImage}` : this.getDefaultCover();
+        // Use secure media route instead of direct file access
+        const coverPath = coverImage ? `/media/cover/${coverImage}` : this.getDefaultCover();
         
         // Mini player
         this.updateElement('miniTitle', title);

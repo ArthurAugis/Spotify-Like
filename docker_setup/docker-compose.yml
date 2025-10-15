@@ -6,7 +6,8 @@ services:
     container_name: spotify_php
     restart: unless-stopped
     volumes:
-      - ./app:/var/www/html
+      # Mount repository root into the container so 'public/' is available at /var/www/html/public
+      - ./:/var/www/html
       - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
     environment:
       - APP_ENV=dev

@@ -136,7 +136,7 @@
                                         <div class="card recommendation-card h-100" data-recommendation-id="{{ recommendation.id }}">
                                             <div class="position-relative">
                                                 {% if recommendation.track.coverImage %}
-                                                    {% set coverPath = '/uploads/covers/' ~ recommendation.track.coverImage %}
+                                                    {% set coverPath = media_cover(recommendation.track.coverImage) %}
                                                 {% else %}
                                                     {% set coverPath = 'data:image/svg+xml;base64,' ~ 'PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDMwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjMzc0MTUxIi8+CjxwYXRoIGQ9Ik0xNTAgMjEwQzkzIDIxMCAyMTAgMTg2IDIxMCAxNTBTMTg2IDkwIDE1MCA5MFM5MCA5NCAxMDYgMTUwUzEwNiAyMTAgMTUwIDIxMFoiIGZpbGw9IiM2QjcyODAiLz4KPHBhdGggZD0iTTE1MCA4QzEzNiAxODAgMTgwIDEzNiAxODAgMTUwUzEzNiAyMDIgMTUwIDEyMFMxMjAgMTMyIDE1MCAxNTBTMTMyIDE4MCAxNTAgMThUIiBmaWxsPSIjOUNBM0FGIi8+Cjwvc3ZnPgo=' %}
                                                 {% endif %}

@@ -149,7 +149,7 @@
                                         <tr class="track-item">
                                             <td>
                                                 {% if track.coverImage %}
-                                                    <img src="{{ asset('uploads/covers/' ~ track.coverImage) }}" 
+                                                    <img src="{{ media_cover(track.coverImage) }}" 
                                                          alt="{{ track.title }} cover" 
                                                          class="rounded" 
                                                          style="width: 40px; height: 40px; object-fit: cover;">
@@ -260,7 +260,7 @@
                                         <tr class="playlist-item" id="playlist-row-{{ playlist.id }}">
                                             <td>
                                                 {% if playlist.coverImage %}
-                                                    <img src="{{ asset('uploads/covers/' ~ playlist.coverImage) }}" 
+                                                    <img src="{{ media_cover(playlist.coverImage) }}" 
                                                          alt="{{ playlist.name }} cover" 
                                                          class="rounded" 
                                                          style="width: 40px; height: 40px; object-fit: cover;">
@@ -696,7 +696,7 @@ function viewPlaylist(id) {
             
             const coverContainer = document.getElementById('viewPlaylistCover');
             if (playlist.coverImage) {
-                coverContainer.innerHTML = `<img src="{{ asset('uploads/covers/') }}${playlist.coverImage}" alt="${playlist.name} cover" class="img-fluid rounded" style="max-width: 200px; max-height: 200px; object-fit: cover;">`;
+                coverContainer.innerHTML = `<img src="/media/cover/${playlist.coverImage}" alt="${playlist.name} cover" class="img-fluid rounded" style="max-width: 200px; max-height: 200px; object-fit: cover;">`;
             } else {
                 coverContainer.innerHTML = `<div class="bg-gradient-primary rounded d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px;"><i class="fas fa-list text-white fa-3x"></i></div>`;
             }
@@ -727,7 +727,7 @@ function viewPlaylist(id) {
                             <td width="40">${index + 1}</td>
                             <td width="50">
                                 ${track.coverImage ? 
-                                    `<img src="{{ asset('uploads/covers/') }}${track.coverImage}" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">` : 
+                                    `<img src="/media/cover/${track.coverImage}" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">` : 
                                     `<div class="bg-gradient-primary rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;"><i class="fas fa-music text-white" style="font-size: 12px;"></i></div>`
                                 }
                             </td>
@@ -915,7 +915,7 @@ function searchTracks(query) {
                 item.innerHTML = `
                     <div class="d-flex align-items-center">
                         ${track.coverImage ? 
-                            `<img src="{{ asset('uploads/covers/') }}${track.coverImage}" class="rounded me-2" style="width: 30px; height: 30px; object-fit: cover;">` : 
+                            `<img src="/media/cover/${track.coverImage}" class="rounded me-2" style="width: 30px; height: 30px; object-fit: cover;">` : 
                             `<div class="bg-gradient-primary rounded me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;"><i class="fas fa-music text-white" style="font-size: 10px;"></i></div>`
                         }
                         <div>

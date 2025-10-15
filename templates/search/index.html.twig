@@ -97,7 +97,7 @@
                                                         <tr class="search-result-item">
                                                             <td>
                                                                 {% if track.coverImage %}
-                                                                    <img src="{{ asset('uploads/covers/' ~ track.coverImage) }}" 
+                                                                    <img src="{{ media_cover(track.coverImage) }}" 
                                                                          alt="{{ track.title }} cover" 
                                                                          class="rounded" 
                                                                          style="width: 40px; height: 40px; object-fit: cover;">
@@ -145,7 +145,7 @@
                                             <div class="card h-100 search-result-item">
                                                 <div class="card-body">
                                                     {% if playlist.coverImage %}
-                                                        <img src="{{ asset('uploads/covers/' ~ playlist.coverImage) }}" 
+                                                        <img src="{{ media_cover(playlist.coverImage) }}" 
                                                              alt="{{ playlist.name }}" 
                                                              class="img-fluid rounded mb-3" 
                                                              style="width: 100%; height: 120px; object-fit: cover;">
