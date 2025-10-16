@@ -6,6 +6,13 @@
 parameters:
     # Secure uploads directory (outside of public/ for better security)
     uploads_directory: '%kernel.project_dir%/var/uploads'
+    # IP filter settings
+    ip_filter.enabled: true
+    ip_filter.whitelist: ['127.0.0.1', '::1']
+    ip_filter.blacklist_file: '%kernel.project_dir%/var/ip_blacklist.txt'
+    ip_filter.auto_block.threshold: 20
+    ip_filter.auto_block.window_seconds: 60
+    ip_filter.auto_block.duration_seconds: 3600
 
 services:
     # default configuration for services in *this* file
@@ -29,6 +36,3 @@ services:
     App\Controller\MediaController:
         arguments:
             $uploadsDirectory: '%uploads_directory%'
-
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
