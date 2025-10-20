@@ -112,13 +112,18 @@ function escapeJs(str) {
 /**
  * Safe play track function with proper escaping
  */
-function safePlayTrack(audioFile, title, artist, coverImage = null) {
+function safePlayTrack(audioFile, title, artist, coverImage = null, trackId = null) {
     // Ensure proper escaping of parameters
     const safeTitle = typeof title === 'string' ? title : '';
     const safeArtist = typeof artist === 'string' ? artist : '';
     const safeCover = typeof coverImage === 'string' ? coverImage : null;
-    
-    window.audioPlayer.playTrack(audioFile, safeTitle, safeArtist, safeCover);
+
+    // If a trackId is provided, prefer calling playTrack with trackId info (we'll let playTrack decide how to call the API)
+    if (window.audioPlayer && typeof window.audioPlayer.playTrack === 'function') {
+        window.audioPlayer.playTrack(audioFile, safeTitle, safeArtist, safeCover, trackId);
+    } else {
+        console.warn('Audio player not available');
+    }
 }
 
 /**

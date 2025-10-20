@@ -155,7 +155,7 @@
                                                     <div class="d-flex gap-1">
                                                         <button type="button" 
                                                                 class="btn btn-success btn-sm flex-fill play-btn"
-                                                                onclick="safePlayTrack('{{ recommendation.track.audioFile }}', '{{ recommendation.track.title|e('js') }}', '{{ recommendation.track.artist|e('js') }}', '{{ recommendation.track.coverImage }}')">
+                                                                onclick="safePlayTrack('{{ recommendation.track.audioFile }}', '{{ recommendation.track.title|e('js') }}', '{{ recommendation.track.artist|e('js') }}', '{{ recommendation.track.coverImage }}', {{ recommendation.track.id }})">
                                                             <i class="fas fa-play"></i>
                                                         </button>
                                                         <button type="button" 

@@ -29,6 +29,13 @@ class Playlist
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $coverImage = null;
 
+
+    /**
+     * Nombre d'écoutes de la playlist
+     */
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    private int $playCount = 0;
+
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $isPublic = false;
 
@@ -180,9 +187,30 @@ class Playlist
         return $this;
     }
 
+
     public function getTrackCount(): int
     {
         return $this->tracks->count();
+    }
+
+    public function getPlayCount(): int
+    {
+        return $this->playCount;
+    }
+
+    public function setPlayCount(int $playCount): static
+    {
+        $this->playCount = $playCount;
+        return $this;
+    }
+
+    /**
+     * Incrémente le nombre d'écoutes de la playlist
+     */
+    public function incrementPlayCount(): static
+    {
+        $this->playCount++;
+        return $this;
     }
 
     public function getTotalDuration(): int

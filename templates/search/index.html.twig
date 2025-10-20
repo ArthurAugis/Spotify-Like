@@ -88,6 +88,7 @@
                                                         <th>Artist</th>
                                                         <th>Album</th>
                                                         <th>Genre</th>
+                                                        <th>Listens</th>
                                                         <th>Owner</th>
                                                         <th width="100">Action</th>
                                                     </tr>
@@ -118,11 +119,16 @@
                                                                     -
                                                                 {% endif %}
                                                             </td>
+                                                            <td>
+                                                                <span class="badge bg-warning text-dark" data-track-id="{{ track.id }}" id="track-playcount-{{ track.id }}">
+                                                                    <i class="fas fa-headphones-alt me-1"></i><span class="count">{{ track.playCount }}</span>
+                                                                </span>
+                                                            </td>
                                                             <td><small class="text-muted">{{ track.owner }}</small></td>
                                                             <td>
-                                                                <button class="btn btn-outline-success btn-sm" 
-                                                                        onclick="safePlayTrack('{{ track.audioFile }}', '{{ track.title|escape('js') }}', '{{ track.artist|escape('js') }}', '{{ track.coverImage }}')"
-                                                                        title="Play">
+                                <button class="btn btn-outline-success btn-sm" data-track-id="{{ track.id }}" 
+                                    onclick="safePlayTrack('{{ track.audioFile }}', '{{ track.title|escape('js') }}', '{{ track.artist|escape('js') }}', '{{ track.coverImage }}', {{ track.id }})"
+                                    title="Play">
                                                                     <i class="fas fa-play"></i>
                                                                 </button>
                                                             </td>
@@ -159,9 +165,14 @@
                                                     <p class="card-text small text-muted">
                                                         {{ playlist.description ?: 'No description' }}
                                                     </p>
-                                                    <p class="card-text small">
+                                                    <p class="card-text small mb-1">
                                                         <i class="fas fa-music me-1"></i>{{ playlist.tracksCount }} tracks<br>
                                                         <i class="fas fa-user me-1"></i>{{ playlist.owner }}
+                                                    </p>
+                                                    <p class="card-text small">
+                                                        <span class="badge bg-warning text-dark" data-playlist-id="{{ playlist.id }}" id="playlist-playcount-{{ playlist.id }}">
+                                                            <i class="fas fa-headphones-alt me-1"></i><span class="count" style="color:black !important;">{{ playlist.playCount }}</span>
+                                                        </span>
                                                     </p>
                                                     <button class="btn btn-outline-primary btn-sm w-100" 
                                                             onclick="viewPublicPlaylist({{ playlist.id }})"

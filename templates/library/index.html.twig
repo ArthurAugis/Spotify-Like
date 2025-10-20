@@ -140,6 +140,7 @@
                                         <th>Artist</th>
                                         <th>Album/Playlist</th>
                                         <th>Genre</th>
+                                        <th>Listens</th>
                                         <th>Date</th>
                                         <th width="200">Actions</th>
                                     </tr>
@@ -183,15 +184,20 @@
                                                 {% endif %}
                                             </td>
                                             <td>
+                                                <span class="badge bg-warning text-dark" data-track-id="{{ track.id }}" id="track-playcount-{{ track.id }}">
+                                                    <i class="fas fa-headphones-alt me-1"></i><span class="count">{{ track.playCount }}</span>
+                                                </span>
+                                            </td>
+                                            <td>
                                                 <small class="text-muted">
                                                     {{ track.createdAt|date('M d, Y') }}
                                                 </small>
                                             </td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
-                                                    <button class="btn btn-outline-info" 
-                                                            onclick="safePlayTrack('{{ track.audioFile }}', '{{ track.title|escape('js') }}', '{{ track.artist|escape('js') }}', '{{ track.coverImage }}')"
-                                                            title="Play">
+                            <button class="btn btn-outline-info" data-track-id="{{ track.id }}" 
+                                onclick="safePlayTrack('{{ track.audioFile }}', '{{ track.title|escape('js') }}', '{{ track.artist|escape('js') }}', '{{ track.coverImage }}', {{ track.id }})"
+                                title="Play">
                                                         <i class="fas fa-play"></i>
                                                     </button>
                                                     <button class="btn btn-outline-success" 
@@ -250,6 +256,7 @@
                                         <th>Name</th>
                                         <th>Description</th>
                                         <th>Tracks</th>
+                                        <th>Listens</th>
                                         <th>Privacy</th>
                                         <th>Created</th>
                                         <th width="250">Actions</th>
@@ -279,6 +286,11 @@
                                             </td>
                                             <td>
                                                 <span class="badge bg-info">{{ playlist.tracks|length }} tracks</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-warning text-dark" data-playlist-id="{{ playlist.id }}" id="playlist-playcount-{{ playlist.id }}">
+                                                    <i class="fas fa-headphones-alt me-1"></i><span class="count">{{ playlist.playCount }}</span>
+                                                </span>
                                             </td>
                                             <td>
                                                 {% if playlist.isPublic %}

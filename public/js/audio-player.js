@@ -38,32 +38,60 @@ window.AudioPlayer = class {
         console.log('AudioPlayer initialized');
     }
     
-    playTrack(audioFile, title, artist, coverImage = null) {
+    playTrack(audioFile, title, artist, coverImage = null, trackId = null) {
         if (this.currentAudio) {
             this.currentAudio.pause();
             this.currentAudio = null;
         }
-        
+
         // Use secure media route instead of direct file access
         this.currentAudio = new Audio(`/media/track/${audioFile}`);
         this.currentTrackInfo = { audioFile, title, artist, coverImage };
         this.currentAudio.volume = this.volume / 100;
-        
+
         // Sync volume sliders to ensure UI consistency
         this.syncVolumeSliders(this.volume);
-        
+
         // Show music player
         const musicPlayer = document.getElementById('musicPlayer');
         if (musicPlayer) {
             musicPlayer.style.display = 'block';
         }
-        
+
         // Update track info in both players
         this.updateTrackInfo(title, artist, coverImage);
-        
+
         // Set up audio event listeners
         this.setupAudioEventListeners();
-        
+
+        // Incrémentation du playCount côté serveur (API)
+        const doTrackListen = (id) => {
+            if (!id) return;
+            fetch(`/api/track/${id}/listen`, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.success) {
+                    if (window.audioPlayer && typeof window.audioPlayer.updatePlayCountInUI === 'function') {
+                        window.audioPlayer.updatePlayCountInUI('track', id, data.playCount);
+                    }
+                } else {
+                    console.warn('Track listen API responded without success', data);
+                }
+            })
+            .catch(err => console.error('Error calling track listen API', err));
+        };
+
+        if (trackId) {
+            doTrackListen(trackId.toString());
+        } else if (audioFile && typeof audioFile === 'string') {
+            // Fallback: try to parse ID from filename (legacy)
+            const match = audioFile.match(/^(\d+)-/);
+            if (match) doTrackListen(match[1]);
+        }
+
         // Play the track
         this.currentAudio.play().then(() => {
             this.isPlaying = true;
@@ -173,6 +201,27 @@ window.AudioPlayer = class {
         const element = document.getElementById(id);
         if (element) {
             element.textContent = content;
+        }
+    }
+
+    /**
+     * Update playCount badge in the UI for track or playlist
+     */
+    updatePlayCountInUI(type, id, newCount) {
+        try {
+            const elId = type === 'track' ? `track-playcount-${id}` : `playlist-playcount-${id}`;
+            const el = document.getElementById(elId);
+            if (el) {
+                const countSpan = el.querySelector('.count');
+                if (countSpan) {
+                    countSpan.textContent = newCount;
+                } else {
+                    // fallback: replace text content
+                    el.textContent = newCount;
+                }
+            }
+        } catch (e) {
+            console.error('Failed to update play count in UI', e);
         }
     }
     
@@ -508,6 +557,25 @@ window.AudioPlayer = class {
      */
     playAllFromPlaylist(playlistId, playlistName, tracks) {
         if (tracks && tracks.length > 0) {
+            // Incrémenter le playCount côté serveur (API)
+            if (playlistId) {
+                fetch(`/api/playlist/${playlistId}/listen`, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.success) {
+                        if (window.audioPlayer && typeof window.audioPlayer.updatePlayCountInUI === 'function') {
+                            window.audioPlayer.updatePlayCountInUI('playlist', playlistId, data.playCount);
+                        }
+                    } else {
+                        console.warn('Playlist listen API responded without success', data);
+                    }
+                })
+                .catch(err => console.error('Error calling playlist listen API', err));
+            }
+
             // Set up playlist queue
             this.currentPlaylistQueue = tracks;
             this.currentTrackIndex = 0;
@@ -608,8 +676,8 @@ if (!window.audioPlayer || !(window.audioPlayer instanceof window.AudioPlayer)) 
 }
 
 // Global functions for backward compatibility
-window.playTrack = (audioFile, title, artist, coverImage) => {
-    window.audioPlayer.playTrack(audioFile, title, artist, coverImage);
+window.playTrack = (audioFile, title, artist, coverImage, trackId = null) => {
+    window.audioPlayer.playTrack(audioFile, title, artist, coverImage, trackId);
 };
 
 window.playAllFromCard = (playlistId, playlistName) => {

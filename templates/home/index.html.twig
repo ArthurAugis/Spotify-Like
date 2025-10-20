@@ -125,6 +125,10 @@
                                     {% if playlist.owner %}
                                         • by {{ playlist.owner.getFirstName() }}
                                     {% endif %}
+                                    <br>
+                                    <span class="badge bg-warning text-dark mt-1" data-playlist-id="{{ playlist.id }}" id="playlist-playcount-{{ playlist.id }}">
+                                        <i class="fas fa-headphones-alt me-1"></i><span class="count" style="color:black !important;">{{ playlist.playCount }}</span>
+                                    </span>
                                 </small>
                                 
                                 {# Overlay action buttons (appear on hover) #}
@@ -188,8 +192,8 @@
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 {% endif %}
-                                <button class="btn btn-success btn-sm play-btn-hover" 
-                                        onclick="safePlayTrack('{{ track.audioFile }}', '{{ track.title|escape('js') }}', '{{ track.artist|escape('js') }}', '{{ track.coverImage }}')"
+                <button class="btn btn-success btn-sm play-btn-hover" data-track-id="{{ track.id }}" 
+                    onclick="safePlayTrack('{{ track.audioFile }}', '{{ track.title|escape('js') }}', '{{ track.artist|escape('js') }}', '{{ track.coverImage }}', {{ track.id }})"
                                         title="Play"
                                         style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
                                     <i class="fas fa-play"></i>
@@ -201,6 +205,10 @@
                                 <h6 class="text-white mb-1 text-truncate">{{ track.title }}</h6>
                                 <small class="text-muted">{{ track.artist }}</small>
                                 <br><small class="text-muted">{{ track.createdAt|date('d/m/Y') }}</small>
+                                <br>
+                                <span class="badge bg-warning text-dark mt-1" data-track-id="{{ track.id }}" id="track-playcount-{{ track.id }}">
+                                    <i class="fas fa-headphones-alt me-1"></i><span class="count" style="color:black !important;">{{ track.playCount }}</span>
+                                </span> 
                             </div>
                         </div>
                     </div>
